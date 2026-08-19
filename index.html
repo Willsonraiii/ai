@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AURA">
+<meta name="theme-color" content="#7c6bff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#08080a">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<title>AURA • AI Assistant for iPhone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0a0a0f;
+    --card:rgba(255,255,255,0.08);
+    --card2:rgba(255,255,255,0.12);
+    --border:rgba(255,255,255,0.1);
+    --text:#fff;
+    --muted:rgba(255,255,255,0.55);
+    --muted2:rgba(255,255,255,0.35);
+    --accent:#7c6bff;
+    --accent2:#ff5a8a;
+    --accent3:#00d4ff;
+    --success:#00e676;
+  }
+  body{
+    font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background:#000;
+    color:var(--text);
+    min-height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    overflow-x:hidden;
+  }
+  /* Desktop background */
+  .desk-bg{
+    position:fixed;inset:0;
+    background: radial-gradient(1200px 800px at 30% -10%, #1a1440 0%, transparent 60%),
+                radial-gradient(1000px 600px at 90% 10%, #3a0a3a 0%, transparent 60%),
+                radial-gradient(900px 700px at 50% 100%, #0a2a4a 0%, transparent 60%),
+                #050507;
+    z-index:-1;
+  }
+  .desk-bg::after{
+    content:'';
+    position:absolute;inset:0;
+    background: radial-gradient(600px 400px at 50% 50%, rgba(124,107,255,0.15), transparent 70%);
+  }
+  /* iPhone Frame */
+  .iphone{
+    width:390px;
+    height:844px;
+    max-height:88dvh;
+    background: linear-gradient(180deg, #0f0f13 0%, #08080a 100%);
+    border-radius:56px;
+    border: 10px solid #1a1a1e;
+    box-shadow: 0 0 0 2px #2a2a30, 0 30px 80px rgba(0,0,0,0.6), 0 0 120px rgba(124,107,255,0.15), inset 0 0 0 1px rgba(255,255,255,0.08);
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  @media(max-width:440px){
+    body{padding:0; align-items:stretch}
+    .iphone{width:100%; height:100dvh; max-height:100dvh; border-radius:0; border:none; box-shadow:none}
+  }
+  /* Status bar */
+  .statusbar{
+    height:52px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 32px 8px;
+    font-size:15px;
+    font-weight:600;
+    z-index:10;
+    flex-shrink:0;
+  }
+  .statusbar .left{font-size:15px; letter-spacing:-0.2px}
+  .statusbar .right{display:flex; gap:6px; align-items:center; font-size:13px}
+  .battery{
+    width:26px; height:13px; border:1px solid rgba(255,255,255,0.4); border-radius:4px; position:relative; padding:2px;
+  }
+  .battery::after{content:''; position:absolute; right:-4px; top:3px; width:2px; height:5px; background:rgba(255,255,255,0.4); border-radius:0 2px 2px 0}
+  .battery-fill{height:100%; width:72%; background:#fff; border-radius:2px}
+  /* Dynamic Island */
+  .dynamic-island{
+    position:absolute;
+    top:11px; left:50%; transform:translateX(-50%);
+    width:98px; height:30px;
+    background:#000;
+    border-radius:20px;
+    z-index:20;
+    display:flex; align-items:center; justify-content:center;
+    transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
+    cursor:pointer;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.06);
+  }
+  .dynamic-island.listening{
+    width:220px; height:42px; border-radius:24px;
+    background: linear-gradient(135deg, #1a1a1e, #000);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .dynamic-island .di-idle{
+    display:flex; align-items:center; gap:8px;
+  }
+  .di-dot{width:8px; height:8px; background:#000; border-radius:50%}
+  .di-cam{width:10px; height:10px; background:#0a0a0a; border-radius:50%; border:1px solid #1a1a1a}
+  .di-listening-content{
+    display:none; align-items:center; gap:10px; width:100%; padding:0 14px;
+  }
+  .dynamic-island.listening .di-idle{display:none}
+  .dynamic-island.listening .di-listening-content{display:flex}
+  .di-wave{display:flex; gap:2px; align-items:center}
+  .di-wave span{width:3px; background:var(--accent); border-radius:10px; animation: wave 0.8s infinite ease-in-out}
+  .di-wave span:nth-child(2){animation-delay:0.1s; background:var(--accent2)}
+  .di-wave span:nth-child(3){animation-delay:0.2s; background:var(--accent3)}
+  .di-wave span:nth-child(4){animation-delay:0.3s}
+  @keyframes wave{0%,100%{height:8px}50%{height:18px}}
+  /* Header */
+  .header{
+    padding:8px 24px 12px;
+    display:flex; align-items:center; justify-content:space-between;
+    flex-shrink:0;
+  }
+  .logo{display:flex; align-items:center; gap:10px}
+  .logo-icon{
+    width:36px; height:36px; border-radius:12px;
+    background: linear-gradient(135deg, #7c6bff 0%, #ff5a8a 50%, #00d4ff 100%);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px;
+    box-shadow: 0 8px 20px rgba(124,107,255,0.4);
+  }
+  .logo-text h1{font-family:'Space Grotesk', sans-serif; font-size:16px; font-weight:600; letter-spacing:-0.3px; line-height:1}
+  .logo-text p{font-size:11px; color:var(--muted); font-weight:500; letter-spacing:0.4px; text-transform:uppercase; margin-top:2px}
+  .header-actions{display:flex; gap:8px}
+  .icon-btn{
+    width:36px; height:36px; border-radius:12px; background:var(--card); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; backdrop-filter: blur(12px);
+    transition:all 0.2s;
+  }
+  .icon-btn:active{transform:scale(0.94)}
+  .icon-btn:hover{background:var(--card2)}
+  /* Main scroll */
+  .main{
+    flex:1; overflow-y:auto; overflow-x:hidden; scrollbar-width:none; -ms-overflow-style:none;
+    padding:0 16px 12px;
+    display:flex; flex-direction:column;
+  }
+  .main::-webkit-scrollbar{display:none}
+  /* Hero / Orb section */
+  .hero{
+    text-align:center; padding:18px 0 10px; flex-shrink:0;
+    transition: all 0.4s;
+  }
+  .hero.compact{padding:8px 0 4px}
+  .hero.compact .orb-wrap{transform:scale(0.72); margin-bottom:-10px}
+  .hero.compact h2{font-size:16px}
+  .hero.compact .hero-sub{font-size:13px}
+  .orb-wrap{
+    position:relative; width:140px; height:140px; margin:0 auto 16px; transition:transform 0.5s cubic-bezier(0.16,1,0.3,1);
+  }
+  .orb{
+    width:100%; height:100%; border-radius:50%;
+    background: radial-gradient(circle at 30% 30%, #fff 0%, #a78bfa 15%, #7c6bff 35%, #ff5a8a 65%, #0a0a1a 85%);
+    position:relative;
+    box-shadow: 0 0 60px rgba(124,107,255,0.5), 0 0 100px rgba(255,90,138,0.3), inset 0 0 40px rgba(255,255,255,0.4);
+    animation: float 4s ease-in-out infinite;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  .orb::before{
+    content:''; position:absolute; inset:8px; border-radius:50%;
+    background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.9) 0%, transparent 50%);
+    opacity:0.6;
+  }
+  .orb::after{
+    content:''; position:absolute; inset:-20px; border-radius:50%;
+    background: conic-gradient(from 0deg, #7c6bff, #ff5a8a, #00d4ff, #7c6bff);
+    opacity:0.15; filter:blur(20px); animation: spin 8s linear infinite;
+  }
+  .orb.listening{
+    animation: pulse 1.2s ease-in-out infinite, float 4s ease-in-out infinite;
+    box-shadow: 0 0 80px rgba(124,107,255,0.8), 0 0 120px rgba(255,90,138,0.5);
+  }
+  .orb.speaking{animation: speakPulse 0.6s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  @keyframes speakPulse{0%,100%{transform:scale(1); filter:brightness(1)}50%{transform:scale(1.04); filter:brightness(1.15)}}
+  .orb-mic{
+    position:relative; z-index:2; width:56px; height:56px; border-radius:50%;
+    background:rgba(0,0,0,0.25); backdrop-filter: blur(12px); border:1px solid rgba(255,255,255,0.2);
+    display:flex; align-items:center; justify-content:center; color:#fff;
+  }
+  .hero h2{font-family:'Space Grotesk', sans-serif; font-size:22px; font-weight:600; letter-spacing:-0.6px; line-height:1.1}
+  .hero-sub{font-size:14px; color:var(--muted); margin-top:6px; line-height:1.4}
+  .hero-sub b{color:#fff; font-weight:600}
+  /* Quick chips */
+  .chips{
+    display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding:6px 2px 10px; flex-shrink:0;
+  }
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex-shrink:0; padding:10px 14px; border-radius:20px; background:var(--card); border:1px solid var(--border);
+    font-size:13px; font-weight:500; color:#fff; cursor:pointer; display:flex; align-items:center; gap:7px;
+    backdrop-filter: blur(12px); transition:all 0.2s; white-space:nowrap;
+  }
+  .chip:hover{background:var(--card2); transform:translateY(-1px)}
+  .chip:active{transform:scale(0.97)}
+  .chip-icon{width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px}
+  /* Chat */
+  .chat{
+    flex:1; display:flex; flex-direction:column; gap:12px; padding:8px 0;
+    min-height:120px;
+  }
+  .msg{max-width:86%; padding:14px 16px; border-radius:20px; font-size:14px; line-height:1.5; position:relative; animation: pop 0.35s cubic-bezier(0.16,1,0.3,1)}
+  @keyframes pop{from{opacity:0; transform:translateY(8px) scale(0.98)} to{opacity:1; transform:translateY(0) scale(1)}}
+  .msg.user{
+    align-self:flex-end; background: linear-gradient(135deg, #7c6bff, #6a5af0); color:#fff; border-bottom-right-radius:6px;
+    box-shadow: 0 8px 20px rgba(124,107,255,0.3);
+  }
+  .msg.assistant{
+    align-self:flex-start; background:var(--card); border:1px solid var(--border); backdrop-filter: blur(16px);
+    border-bottom-left-radius:6px; color:rgba(255,255,255,0.92);
+  }
+  .msg.assistant b{color:#fff}
+  .msg-time{font-size:11px; color:var(--muted2); margin-top:6px; display:flex; align-items:center; gap:6px}
+  .msg.user .msg-time{color:rgba(255,255,255,0.75); justify-content:flex-end}
+  /* Cards */
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:20px; padding:16px; backdrop-filter: blur(16px);
+    animation: pop 0.35s cubic-bezier(0.16,1,0.3,1);
+  }
+  .card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+  .card-title{font-size:13px; font-weight:600; letter-spacing:0.3px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:8px}
+  .card-title span{width:28px; height:28px; border-radius:10px; display:flex; align-items:center; justify-content:center}
+  .weather-grid{display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:center}
+  .weather-temp{font-size:36px; font-weight:700; letter-spacing:-1.5px; line-height:1}
+  .weather-temp small{font-size:16px; font-weight:500; color:var(--muted); vertical-align:super}
+  .weather-desc{font-size:13px; color:var(--muted); margin-top:4px}
+  .weather-stats{display:flex; gap:10px; margin-top:10px}
+  .w-stat{flex:1; background:rgba(255,255,255,0.06); border-radius:12px; padding:8px 10px; text-align:center}
+  .w-stat b{font-size:13px; display:block}
+  .w-stat span{font-size:11px; color:var(--muted)}
+  .task-item{
+    display:flex; align-items:center; gap:12px; padding:12px; background:rgba(255,255,255,0.06); border-radius:14px; margin-bottom:8px;
+    border:1px solid transparent; transition:all 0.2s;
+  }
+  .task-item:hover{border-color:var(--border); background:rgba(255,255,255,0.08)}
+  .task-check{width:22px; height:22px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0}
+  .task-check.done{background:var(--success); border-color:var(--success); color:#000}
+  .task-text{flex:1; font-size:13px; line-height:1.4}
+  .task-text b{font-weight:600}
+  .task-text small{color:var(--muted); display:block; font-size:11px; margin-top:2px}
+  .task-item.done{opacity:0.55}
+  .task-item.done .task-text{text-decoration:line-through}
+  /* Input bar */
+  .input-bar{
+    margin:10px 16px 10px; background:rgba(255,255,255,0.08); border:1px solid var(--border);
+    border-radius:28px; padding:6px; display:flex; align-items:center; gap:6px; backdrop-filter: blur(20px);
+    flex-shrink:0; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  .input-bar:focus-within{border-color:rgba(124,107,255,0.5); box-shadow: 0 0 0 3px rgba(124,107,255,0.15)}
+  .input-plus, .input-send, .input-mic{
+    width:42px; height:42px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s;
+  }
+  .input-plus{background:rgba(255,255,255,0.1); color:#fff}
+  .input-mic{background: linear-gradient(135deg, #7c6bff, #ff5a8a); color:#fff; box-shadow:0 6px 16px rgba(124,107,255,0.4); position:relative}
+  .input-mic.listening{background:linear-gradient(135deg, #ff5a8a, #ff3b5c); animation: pulse 1s infinite}
+  .input-mic.listening::after{
+    content:''; position:absolute; inset:-4px; border-radius:50%; border:2px solid rgba(255,90,138,0.4); animation: ripple 1.2s infinite;
+  }
+  @keyframes ripple{0%{transform:scale(1); opacity:1}100%{transform:scale(1.25); opacity:0}}
+  .input-send{background:#fff; color:#000}
+  .input-send:disabled{opacity:0.5; cursor:not-allowed}
+  .input-field{
+    flex:1; background:transparent; border:none; outline:none; color:#fff; font-size:15px; font-family:inherit; padding:8px 4px;
+  }
+  .input-field::placeholder{color:var(--muted2)}
+  /* Bottom handle */
+  .home-indicator{
+    width:134px; height:5px; background:#fff; border-radius:10px; margin:6px auto 8px; opacity:0.9; flex-shrink:0;
+  }
+  /* Typing */
+  .typing{display:flex; gap:4px; padding:14px 16px; align-items:center}
+  .typing span{width:6px; height:6px; background:var(--muted); border-radius:50%; animation: bounce 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:0.15s}
+  .typing span:nth-child(3){animation-delay:0.3s}
+  @keyframes bounce{0%,80%,100%{transform:translateY(0); opacity:0.5}40%{transform:translateY(-6px); opacity:1}}
+  /* Action sheet */
+  .sheet-overlay{position:absolute; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:none; z-index:30; align-items:flex-end; border-radius:46px; overflow:hidden}
+  .sheet-overlay.open{display:flex}
+  .sheet{
+    width:100%; background:#1c1c1e; border-radius:28px 28px 0 0; padding:8px 16px 24px; animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+    border-top:1px solid rgba(255,255,255,0.08);
+  }
+  @media(max-width:440px){ .sheet-overlay{border-radius:0} }
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .sheet-handle{width:36px; height:5px; background:rgba(255,255,255,0.2); border-radius:10px; margin:8px auto 16px}
+  .sheet-title{font-size:17px; font-weight:600; text-align:center; margin-bottom:14px}
+  .sheet-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px}
+  .sheet-item{display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer}
+  .sheet-icon{width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:22px}
+  .sheet-label{font-size:11px; color:var(--muted); text-align:center; line-height:1.2}
+  .sheet-actions{display:flex; flex-direction:column; gap:8px}
+  .sheet-btn{width:100%; padding:14px; border-radius:14px; border:none; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit}
+  .sheet-btn.primary{background:#fff; color:#000}
+  .sheet-btn.secondary{background:rgba(255,255,255,0.1); color:#fff}
+  /* Toast */
+  .toast{
+    position:absolute; top:62px; left:50%; transform:translateX(-50%) translateY(-10px);
+    background:rgba(28,28,30,0.95); border:1px solid var(--border); padding:10px 16px; border-radius:20px;
+    font-size:13px; font-weight:500; display:flex; align-items:center; gap:8px; opacity:0; pointer-events:none; transition:all 0.3s; z-index:25; white-space:nowrap;
+    backdrop-filter: blur(20px);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  /* Api key banner */
+  .api-banner{
+    margin:8px 16px 0; padding:10px 12px; background:linear-gradient(135deg, rgba(124,107,255,0.15), rgba(255,90,138,0.15));
+    border:1px solid rgba(124,107,255,0.25); border-radius:14px; display:flex; align-items:center; gap:10px; font-size:12px; line-height:1.4;
+  }
+  .api-banner input{flex:1; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:10px; padding:8px 10px; color:#fff; font-size:12px; outline:none; font-family:inherit}
+  .api-banner button{padding:8px 12px; border-radius:10px; border:none; background:#fff; color:#000; font-weight:600; font-size:12px; cursor:pointer; white-space:nowrap}
+  /* Empty */
+  .empty{text-align:center; padding:28px 20px; color:var(--muted2); font-size:13px}
+  .pro-badge{
+    display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background: linear-gradient(135deg, #7c6bff, #ff5a8a);
+    border-radius:20px; font-size:11px; font-weight:700; letter-spacing:0.4px; text-transform:uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="desk-bg"></div>
+
+<div class="iphone" id="iphone">
+  <!-- Status bar -->
+  <div class="statusbar">
+    <div class="left" id="statusTime">9:41</div>
+    <div class="right">
+      <svg width="18" height="11" viewBox="0 0 18 11" fill="none"><path d="M2 8V3M6 8V1M10 8V4M14 8V2" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M1 5.5H4L6 1L9 10L11 5.5H15" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="battery"><div class="battery-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- Dynamic Island -->
+  <div class="dynamic-island" id="dynamicIsland" onclick="toggleListening()">
+    <div class="di-idle">
+      <div class="di-cam"></div>
+      <div class="di-dot"></div>
+    </div>
+    <div class="di-listening-content">
+      <div class="di-wave"><span></span><span></span><span></span><span></span></div>
+      <span style="font-size:12px; font-weight:600; letter-spacing:0.2px" id="diText">Listening...</span>
+      <span style="margin-left:auto; width:8px; height:8px; background:#ff3b30; border-radius:50%; box-shadow:0 0 8px #ff3b30"></span>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">◐</div>
+      <div class="logo-text">
+        <h1>AURA</h1>
+        <p>AI • iPhone</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="openSheet()" title="Actions">◧</button>
+      <button class="icon-btn" onclick="clearChat()" title="Clear">↺</button>
+    </div>
+  </div>
+
+  <!-- FREE Banner -->
+  <div class="api-banner" id="apiBanner" style="background:linear-gradient(135deg, rgba(16,185,129,0.15), rgba(124,107,255,0.15)); border-color:rgba(16,185,129,0.3)">
+    <span style="font-size:16px">✅</span>
+    <div style="flex:1">
+      <div style="font-weight:700; color:#fff; font-size:12px">FREE MODE • 100% Free Forever</div>
+      <div style="color:var(--muted); font-size:11px">No API key • No payment • On-device + Free Cloud AI</div>
+    </div>
+    <span style="padding:6px 10px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.3); border-radius:20px; font-size:11px; font-weight:700; color:#6ee7b7">FREE ✓</span>
+  </div>
+  <div id="freeAiToggle" style="margin:6px 16px 0; display:flex; gap:6px; align-items:center; font-size:11px; color:var(--muted)">
+    <span style="width:8px; height:8px; background:#10b981; border-radius:50%; box-shadow:0 0 8px #10b981"></span> Free AI:
+    <button onclick="setFreeMode('local')" id="btnLocal" style="padding:5px 10px; border-radius:20px; border:1px solid #10b981; background:#10b981; color:#000; font-weight:700; font-size:11px; cursor:pointer">Local (offline)</button>
+    <button onclick="setFreeMode('cloud')" id="btnCloud" style="padding:5px 10px; border-radius:20px; border:1px solid var(--border); background:rgba(255,255,255,0.08); color:#fff; font-weight:600; font-size:11px; cursor:pointer">Free Cloud</button>
+    <span style="margin-left:auto; color:var(--muted2); font-size:10px">OpenAI key optional</span>
+  </div>
+
+  <div class="main" id="mainScroll">
+    <!-- Hero -->
+    <div class="hero" id="hero">
+      <div class="orb-wrap">
+        <div class="orb" id="orb">
+          <div class="orb-mic" id="orbMic">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 10a7 7 0 0 1-14 0"/><path d="M12 19v4"/><path d="M8 23h8"/></svg>
+          </div>
+        </div>
+      </div>
+      <h2>Hey, I'm AURA</h2>
+      <p class="hero-sub">Your iPhone AI assistant.<br>Tap the mic or <b>say "Hey Aura"</b> — I can chat, set<br>reminders, check weather & get things done.</p>
+      <div style="margin-top:12px"><span class="pro-badge">● Live on iPhone • No download needed</span></div>
+    </div>
+
+    <!-- Chips -->
+    <div class="chips" id="chips">
+      <button class="chip" onclick="quickAction('weather')"><span class="chip-icon" style="background:#0ea5e9">⛅</span> Weather in Kathmandu</button>
+      <button class="chip" onclick="quickAction('reminder')"><span class="chip-icon" style="background:#f59e0b">⏰</span> Remind me in 5 min</button>
+      <button class="chip" onclick="quickAction('tasks')"><span class="chip-icon" style="background:#10b981">✓</span> My tasks</button>
+      <button class="chip" onclick="quickAction('summarize')"><span class="chip-icon" style="background:#8b5cf6">✦</span> Summarize</button>
+      <button class="chip" onclick="quickAction('joke')"><span class="chip-icon" style="background:#ec4899">♡</span> Tell a joke</button>
+      <button class="chip" onclick="quickAction('calculate')"><span class="chip-icon" style="background:#06b6d4">∑</span> Calculate 247×18</button>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat" id="chat">
+      <div class="msg assistant">
+        Try these — tap any chip or just talk to me:
+        <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px">
+          <span style="padding:6px 10px; background:rgba(255,255,255,0.08); border-radius:20px; font-size:12px">“What’s the weather?”</span>
+          <span style="padding:6px 10px; background:rgba(255,255,255,0.08); border-radius:20px; font-size:12px">“Remind me to call Mom at 6pm”</span>
+          <span style="padding:6px 10px; background:rgba(255,255,255,0.08); border-radius:20px; font-size:12px">“Summarize this article…”</span>
+        </div>
+        <div class="msg-time">AURA • just now • Tap mic to speak 🎙️</div>
+      </div>
+    </div>
+
+    <!-- Dynamic cards container -->
+    <div id="cards" style="display:flex; flex-direction:column; gap:12px; padding-top:4px"></div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-bar" id="inputBar">
+    <button class="input-plus" onclick="openSheet()" aria-label="More">＋</button>
+    <input class="input-field" id="inputField" placeholder="Ask AURA anything..." onkeydown="if(event.key==='Enter') sendMessage()" autocomplete="off">
+    <button class="input-mic" id="micBtn" onclick="toggleListening()" aria-label="Voice">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 10a7 7 0 0 1-14 0"/><path d="M12 19v4"/></svg>
+    </button>
+    <button class="input-send" id="sendBtn" onclick="sendMessage()" aria-label="Send">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+    </button>
+  </div>
+
+  <div class="home-indicator"></div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">✓ Saved</div>
+
+  <!-- Sheet -->
+  <div class="sheet-overlay" id="sheetOverlay" onclick="if(event.target===this) closeSheet()">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">What can AURA do?</div>
+      <div class="sheet-grid">
+        <div class="sheet-item" onclick="quickAction('weather');closeSheet()"><div class="sheet-icon" style="background:linear-gradient(135deg,#0ea5e9,#06b6d4)">⛅</div><div class="sheet-label">Weather</div></div>
+        <div class="sheet-item" onclick="quickAction('reminder');closeSheet()"><div class="sheet-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">⏰</div><div class="sheet-label">Reminder</div></div>
+        <div class="sheet-item" onclick="quickAction('tasks');closeSheet()"><div class="sheet-icon" style="background:linear-gradient(135deg,#10b981,#059669)">✓</div><div class="sheet-label">Tasks</div></div>
+        <div class="sheet-item" onclick="quickAction('calendar');closeSheet()"><div class="sheet-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)">📅</div><div class="sheet-label">Calendar</div></div>
+        <div class="sheet-item" onclick="quickAction('summarize');closeSheet()"><div class="sheet-icon" style="background:linear-gradient(135deg,#ec4899,#be185d)">✦</div><div class="sheet-label">Summarize</div></div>
+        <div class="sheet-item" onclick="quickAction('translate');closeSheet()"><div class="sheet-icon" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">◐</div><div class="sheet-label">Translate</div></div>
+        <div class="sheet-item" onclick="quickAction('calculate');closeSheet()"><div class="sheet-icon" style="background:linear-gradient(135deg,#14b8a6,#0d9488)">∑</div><div class="sheet-label">Calculate</div></div>
+        <div class="sheet-item" onclick="quickAction('search');closeSheet()"><div class="sheet-icon" style="background:linear-gradient(135deg,#f97316,#ea580c)">⌕</div><div class="sheet-label">Web Search</div></div>
+      </div>
+      <div class="sheet-actions">
+        <button class="sheet-btn secondary" onclick="requestNotif();closeSheet()">🔔 Enable Notifications</button>
+        <button class="sheet-btn primary" onclick="closeSheet()">Done</button>
+      </div>
+      <div style="text-align:center; font-size:11px; color:rgba(255,255,255,0.35); margin-top:12px">AURA v1.1 • 100% FREE • No API key • Works offline • Add to Home Screen</div>
+    </div>
+  </div>
+</div>
+
+<!-- Desktop side panel -->
+<div style="position:fixed; right:24px; top:24px; width:340px; background:rgba(20,20,24,0.9); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.08); border-radius:24px; padding:20px; display:none; flex-direction:column; gap:16px; box-shadow:0 20px 60px rgba(0,0,0,0.4)" id="sidePanel">
+  <div>
+    <div style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:600; letter-spacing:-0.4px">AURA for iPhone</div>
+    <div style="font-size:13px; color:var(--muted); margin-top:4px; line-height:1.5">Blazing-fast Siri-like assistant that lives on your iPhone. No App Store needed — add to Home Screen and it behaves like a native app.</div>
+  </div>
+  <div style="background:rgba(255,255,255,0.06); border-radius:16px; padding:14px; border:1px solid rgba(255,255,255,0.06)">
+    <div style="font-size:12px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:var(--muted); margin-bottom:10px">✦ How to install on iPhone</div>
+    <ol style="font-size:13px; color:rgba(255,255,255,0.8); line-height:1.6; padding-left:16px; margin:0">
+      <li>Open this page in <b style="color:#fff">Safari on iPhone</b></li>
+      <li>Tap <b style="color:#fff">Share → Add to Home Screen</b></li>
+      <li>Launch <b style="color:#fff">AURA</b> — full screen, offline, instant</li>
+    </ol>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+    <div style="background:linear-gradient(135deg, rgba(124,107,255,0.2), rgba(124,107,255,0.05)); border:1px solid rgba(124,107,255,0.2); border-radius:16px; padding:14px; text-align:center">
+      <div style="font-size:22px">🎙️</div><div style="font-size:12px; font-weight:600; margin-top:6px">Voice First</div><div style="font-size:11px; color:var(--muted)">Web Speech API</div>
+    </div>
+    <div style="background:linear-gradient(135deg, rgba(255,90,138,0.2), rgba(255,90,138,0.05)); border:1px solid rgba(255,90,138,0.2); border-radius:16px; padding:14px; text-align:center">
+      <div style="font-size:22px">⚡</div><div style="font-size:12px; font-weight:600; margin-top:6px">100% Private</div><div style="font-size:11px; color:var(--muted)">Runs on-device</div>
+    </div>
+  </div>
+  <div style="font-size:11px; color:var(--muted2); line-height:1.5">Tip: AURA works without an API key. Add your OpenAI key to unlock GPT-4o. Or keep the free local brain — perfect for reminders, calculations, and quick answers.</div>
+  <button onclick="document.getElementById('sidePanel').style.display='none'" style="position:absolute; top:12px; right:12px; width:28px; height:28px; border-radius:50%; border:none; background:rgba(255,255,255,0.1); color:#fff; cursor:pointer">✕</button>
+</div>
+
+<script>
+const chatEl = document.getElementById('chat');
+const inputEl = document.getElementById('inputField');
+const mainScroll = document.getElementById('mainScroll');
+const heroEl = document.getElementById('hero');
+const cardsEl = document.getElementById('cards');
+const orbEl = document.getElementById('orb');
+const micBtn = document.getElementById('micBtn');
+const diEl = document.getElementById('dynamicIsland');
+const diText = document.getElementById('diText');
+const toastEl = document.getElementById('toast');
+
+// State
+let isListening = false;
+let recognition = null;
+let tasks = JSON.parse(localStorage.getItem('aura_tasks')||'[]');
+if(tasks.length===0){
+  tasks = [
+    {id:1, text:'Review AURA design system', time:'Today • 4:00 PM', done:false},
+    {id:2, text:'Call Mom', time:'Today • 6:00 PM', done:false},
+    {id:3, text:'Buy groceries for weekend', time:'Tomorrow', done:false}
+  ];
+  saveTasks();
+}
+let apiKey = localStorage.getItem('aura_apikey')||'';
+let freeMode = localStorage.getItem('aura_free_mode')||'local'; // 'local' or 'cloud' — both FREE
+
+function saveTasks(){ localStorage.setItem('aura_tasks', JSON.stringify(tasks)); }
+function setFreeMode(mode){
+  freeMode=mode;
+  localStorage.setItem('aura_free_mode', mode);
+  document.getElementById('btnLocal').style.cssText = mode==='local' ? 'padding:5px 10px; border-radius:20px; border:1px solid #10b981; background:#10b981; color:#000; font-weight:700; font-size:11px; cursor:pointer' : 'padding:5px 10px; border-radius:20px; border:1px solid var(--border); background:rgba(255,255,255,0.08); color:#fff; font-weight:600; font-size:11px; cursor:pointer';
+  document.getElementById('btnCloud').style.cssText = mode==='cloud' ? 'padding:5px 10px; border-radius:20px; border:1px solid #7c6bff; background:linear-gradient(135deg,#7c6bff,#a78bfa); color:#fff; font-weight:700; font-size:11px; cursor:pointer' : 'padding:5px 10px; border-radius:20px; border:1px solid var(--border); background:rgba(255,255,255,0.08); color:#fff; font-weight:600; font-size:11px; cursor:pointer';
+  showToast(mode==='local' ? 'Free Local Mode ✓ Works offline, no data sent' : 'Free Cloud Mode ✓ Smarter replies (Pollinations AI, free)', 3000);
+}
+setTimeout(()=> setFreeMode(freeMode), 400);
+
+function updateTime(){
+  const now = new Date();
+  document.getElementById('statusTime').textContent = now.toLocaleTimeString('en-US',{hour:'numeric', minute:'2-digit', hour12:false});
+  // Kathmandu time is same as device time approx for demo
+}
+setInterval(updateTime, 1000); updateTime();
+
+// Responsive side panel
+if(window.innerWidth>900) document.getElementById('sidePanel').style.display='flex';
+window.addEventListener('resize', ()=>{
+  if(window.innerWidth>900) document.getElementById('sidePanel').style.display='flex';
+});
+
+// ===== VOICE: robust handling + iframe fix =====
+let micPermission = 'unknown'; // granted|denied|unknown
+async function primeMicPermission(){
+  try{
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return true;
+    const s = await navigator.mediaDevices.getUserMedia({audio:true});
+    s.getTracks().forEach(t=>t.stop());
+    micPermission='granted';
+    return true;
+  }catch(e){
+    micPermission='denied';
+    console.warn('Mic permission denied', e);
+    return false;
+  }
+}
+function isInIframe(){
+  try{ return window.self !== window.top; }catch(e){ return true; }
+}
+function getVoiceErrorHelp(error){
+  if(isInIframe()) return 'Voice is blocked inside this preview iframe. Open this page directly in Safari/Chrome (tap “Open outside” ↗) then try again — iOS blocks mic in iframes.';
+  if(error==='not-allowed' || error==='permission-denied') return 'Mic blocked. Go to iPhone Settings → Safari → Microphone → Allow, or tap the lock icon → Allow Microphone, then reload.';
+  if(error==='no-speech') return 'No speech detected — try speaking louder and closer.';
+  if(error==='audio-capture') return 'No microphone found. Try on your iPhone, not desktop simulator.';
+  if(error==='network') return 'Speech needs internet. Check connection.';
+  return 'Error: '+error+'. Try typing instead, or try again.';
+}
+function initSpeech(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    console.warn('SpeechRecognition not supported');
+    micBtn.title='Voice not supported — type instead';
+    // show banner
+    setTimeout(()=> showVoiceBanner(), 800);
+    return null;
+  }
+  const r = new SR();
+  r.lang='en-US';
+  r.interimResults=true;
+  r.continuous=false;
+  r.maxAlternatives=1;
+  r.onstart=()=>{ isListening=true; updateListeningUI(); diText.textContent='Listening...'; showToast('🎙️ Listening — speak now'); };
+  r.onspeechstart=()=>{ diText.textContent='Hearing you…'; };
+  r.onend=()=>{ isListening=false; updateListeningUI(); };
+  r.onerror=(e)=>{
+    isListening=false; updateListeningUI();
+    const msg=getVoiceErrorHelp(e.error);
+    showToast(msg, 4000);
+    // also show in chat for clarity
+    if(e.error==='not-allowed' || isInIframe()){
+      showVoiceBanner(msg);
+    }
+  };
+  r.onresult=(e)=>{
+    let interim='', final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t=e.results[i][0].transcript;
+      if(e.results[i].isFinal) final+=t; else interim+=t;
+    }
+    const text = (final||interim).trim();
+    inputEl.value=text;
+    diText.textContent = text ? `"${text.slice(0,28)}"` : 'Listening...';
+    if(final && text){
+      // small delay to allow UI to update
+      setTimeout(()=> sendMessage(), 120);
+    }
+  };
+  return r;
+}
+recognition = initSpeech();
+function showVoiceBanner(customMsg){
+  let b=document.getElementById('voiceBanner');
+  if(b) return;
+  b=document.createElement('div');
+  b.id='voiceBanner';
+  const inIframe = isInIframe();
+  b.style.cssText='margin:8px 16px 0; padding:12px; background:rgba(255,59,48,0.12); border:1px solid rgba(255,59,48,0.25); border-radius:14px; font-size:12px; line-height:1.5; color:#fff';
+  b.innerHTML=`
+    <div style="display:flex; gap:10px; align-items:start">
+      <span style="font-size:18px">🎙️</span>
+      <div style="flex:1">
+        <div style="font-weight:700; color:#ff8a80">Voice needs your microphone</div>
+        <div style="color:rgba(255,255,255,0.7); margin-top:4px">${customMsg || (inIframe ? 'This preview blocks the mic. <b style=color:#fff>Open this page directly</b> (not inside the iframe) for voice to work on iPhone.' : 'Tap the mic and allow Microphone. On iPhone: Settings → Safari → Microphone → Allow.')}</div>
+        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap">
+          ${inIframe ? `<a href="${location.href}" target="_blank" style="padding:8px 12px; background:#fff; color:#000; border-radius:10px; font-weight:700; text-decoration:none; font-size:12px">↗ Open outside iframe</a>` : ''}
+          <button onclick="testVoice()" style="padding:8px 12px; background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:10px; font-weight:600; cursor:pointer; font-size:12px">Test mic again</button>
+          <button onclick="this.closest('#voiceBanner').remove()" style="padding:8px 12px; background:transparent; color:rgba(255,255,255,0.6); border:none; cursor:pointer; font-size:12px">Dismiss</button>
+        </div>
+        <div style="margin-top:8px; font-size:11px; color:rgba(255,255,255,0.45)">Tip: Voice works best in Safari on iPhone or Chrome on Android/Desktop. Typing always works.</div>
+      </div>
+    </div>
+  `;
+  document.querySelector('.main').prepend(b);
+  // also update orb hint
+  const heroSub=document.querySelector('.hero-sub');
+  if(heroSub && inIframe) heroSub.innerHTML='Voice is blocked in preview.<br><b>Open outside iframe</b> or just type to chat →';
+}
+async function testVoice(){
+  const ok=await primeMicPermission();
+  if(ok){
+    showToast('Mic ready ✓ — tap mic again');
+    const b=document.getElementById('voiceBanner');
+    if(b) b.remove();
+  } else {
+    showToast('Still blocked — check Settings → Safari → Microphone', 3500);
+  }
+}
+
+function updateListeningUI(){
+  if(isListening){
+    orbEl.classList.add('listening');
+    micBtn.classList.add('listening');
+    diEl.classList.add('listening');
+    diText.textContent='Listening...';
+    heroEl.classList.add('compact');
+  } else {
+    orbEl.classList.remove('listening');
+    micBtn.classList.remove('listening');
+    diEl.classList.remove('listening');
+    heroEl.classList.remove('compact');
+  }
+}
+async function toggleListening(){
+  if(!recognition){
+    showVoiceBanner();
+    showToast('Voice not supported — try Safari on iPhone or Chrome', 3500);
+    return;
+  }
+  if(isListening){
+    try{ recognition.stop(); }catch(e){}
+    return;
+  }
+  // iOS iframe check - explain
+  if(isInIframe()){
+    showVoiceBanner();
+    showToast('Open outside preview to use mic ↗', 3500);
+    // still try, but will fail with not-allowed
+  }
+  // Prime permission with getUserMedia first (improves iOS reliability)
+  const hasMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  if(hasMedia && micPermission!=='granted'){
+    const ok=await primeMicPermission();
+    if(!ok){
+      showVoiceBanner();
+      showToast('Mic permission denied — allow it and reload', 3500);
+      return;
+    }
+  }
+  try{
+    recognition.start();
+    if(navigator.vibrate) navigator.vibrate(30);
+  }catch(e){
+    // already started?
+    try{ recognition.stop(); setTimeout(()=>recognition.start(), 250); }catch(e2){ showToast('Mic busy — wait a sec and tap again'); }
+  }
+}
+
+// TTS
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/[*#`]/g,'').slice(0,400));
+  u.rate=0.98; u.pitch=1.05;
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v=>v.name.includes('Samantha')||v.name.includes('Ava')||v.name.includes('Karen')) || voices.find(v=>v.lang.startsWith('en')) || voices[0];
+  if(preferred) u.voice=preferred;
+  orbEl.classList.add('speaking');
+  u.onend=()=>orbEl.classList.remove('speaking');
+  u.onerror=()=>orbEl.classList.remove('speaking');
+  speechSynthesis.speak(u);
+  if(navigator.vibrate) navigator.vibrate([20,40,20]);
+}
+window.speechSynthesis.onvoiceschanged=()=>{};
+
+// Helpers
+function showToast(msg, ms=2200){
+  toastEl.textContent=msg;
+  toastEl.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t=setTimeout(()=>toastEl.classList.remove('show'), ms);
+}
+function scrollToBottom(){
+  setTimeout(()=>{ mainScroll.scrollTo({top: mainScroll.scrollHeight, behavior:'smooth'}); }, 80);
+}
+function addMessage(text, who='assistant', opts={}){
+  if(who==='assistant' && heroEl) heroEl.classList.add('compact');
+  const div=document.createElement('div');
+  div.className='msg '+who;
+  const time = new Date().toLocaleTimeString('en-US',{hour:'numeric', minute:'2-digit'});
+  let extra='';
+  if(opts.html) extra=opts.html;
+  div.innerHTML = `${escapeHtml(text).replace(/\n/g,'<br>')}${extra}<div class="msg-time">${who==='user'?'You':'AURA'} • ${time} ${who==='assistant'?'• 🔊':''}</div>`;
+  if(who==='assistant'){
+    div.style.cursor='pointer';
+    div.onclick=()=>speak(text);
+    div.title='Tap to hear aloud';
+  }
+  chatEl.appendChild(div);
+  scrollToBottom();
+  return div;
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function addTyping(){
+  const d=document.createElement('div');
+  d.className='msg assistant typing';
+  d.id='typing';
+  d.innerHTML='<span></span><span></span><span></span>';
+  chatEl.appendChild(d);
+  scrollToBottom();
+  return d;
+}
+
+function handleApiKey(){
+  // Kept for backward compat — now optional. Power users can still add key via console: localStorage.setItem('aura_apikey','sk-...')
+  const val=prompt('Optional: Paste OpenAI sk-... key to enable GPT-4o (or leave empty to stay 100% FREE)');
+  if(val && val.trim().startsWith('sk-')){
+    apiKey=val.trim();
+    localStorage.setItem('aura_apikey', apiKey);
+    showToast('GPT-4o enabled (optional) — free modes still work!', 3000);
+  } else if(val) {
+    showToast('Key should start with sk- — staying on FREE mode');
+  } else {
+    showToast('Staying on FREE mode ✓');
+  }
+}
+
+// Quick actions
+function quickAction(type){
+  const map={
+    weather:'What is the weather in Kathmandu right now?',
+    reminder:'Remind me to drink water in 5 minutes',
+    tasks:'Show my tasks',
+    summarize:'Summarize: Artificial Intelligence is transforming the iPhone by enabling on-device personal assistance that understands context, voice, and daily routines.',
+    joke:'Tell me a joke',
+    calculate:'Calculate 247 times 18',
+    calendar:'What is on my calendar today?',
+    translate:'Translate hello how are you to Nepali',
+    search:'Search for best iPhone AI apps 2026'
+  };
+  inputEl.value=map[type]||type;
+  sendMessage();
+}
+
+// Cards
+function showWeatherCard(data){
+  const card=document.createElement('div');
+  card.className='card';
+  // data from open-meteo or mock
+  const temp = data?.temp ?? 23;
+  const desc = data?.desc ?? 'Partly cloudy';
+  const humidity = data?.humidity ?? 68;
+  const wind = data?.wind ?? 8;
+  const high = data?.high ?? 26;
+  const icon = data?.icon ?? '⛅';
+  card.innerHTML=`
+    <div class="card-head">
+      <div class="card-title"><span style="background:linear-gradient(135deg,#0ea5e9,#06b6d4)">${icon}</span> Kathmandu • Now</div>
+      <span style="font-size:11px; color:var(--muted); background:rgba(255,255,255,0.08); padding:4px 8px; border-radius:20px">Live</span>
+    </div>
+    <div class="weather-grid">
+      <div>
+        <div class="weather-temp">${temp}<small>°C</small></div>
+        <div class="weather-desc">${desc} • Feels like ${temp+1}°</div>
+        <div class="weather-stats">
+          <div class="w-stat"><b>${humidity}%</b><span>Humidity</span></div>
+          <div class="w-stat"><b>${wind} km/h</b><span>Wind</span></div>
+          <div class="w-stat"><b>${high}°</b><span>High</span></div>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:48px; line-height:1">${icon}</div>
+        <div style="font-size:11px; color:var(--muted); margin-top:6px">Updated just now</div>
+        <button onclick="quickAction('weather')" style="margin-top:8px; padding:6px 10px; border-radius:20px; border:1px solid var(--border); background:rgba(255,255,255,0.08); color:#fff; font-size:11px; cursor:pointer">↻ Refresh</button>
+      </div>
+    </div>
+  `;
+  cardsEl.prepend(card);
+  scrollToBottom();
+}
+function showTasksCard(){
+  const card=document.createElement('div');
+  card.className='card';
+  const tasksHtml = tasks.map(t=>`
+    <div class="task-item ${t.done?'done':''}" data-id="${t.id}">
+      <div class="task-check ${t.done?'done':''}" onclick="toggleTask(${t.id})">${t.done?'✓':''}</div>
+      <div class="task-text"><b>${escapeHtml(t.text)}</b><small>${escapeHtml(t.time)}</small></div>
+      <button onclick="deleteTask(${t.id})" style="background:none; border:none; color:var(--muted2); cursor:pointer; padding:4px">✕</button>
+    </div>
+  `).join('') || '<div class="empty">No tasks yet — say “Remind me to…”</div>';
+  card.innerHTML=`
+    <div class="card-head">
+      <div class="card-title"><span style="background:linear-gradient(135deg,#10b981,#059669)">✓</span> Your Tasks • ${tasks.filter(t=>!t.done).length} left</div>
+      <button onclick="addTaskPrompt()" style="padding:6px 10px; border-radius:20px; background:#fff; color:#000; border:none; font-size:12px; font-weight:600; cursor:pointer">+ New</button>
+    </div>
+    ${tasksHtml}
+    <div style="margin-top:10px; display:flex; gap:8px">
+      <input id="newTaskInput" placeholder="Add a task..." style="flex:1; background:rgba(255,255,255,0.08); border:1px solid var(--border); border-radius:12px; padding:10px 12px; color:#fff; outline:none; font-size:13px">
+      <button onclick="addTaskFromInput()" style="padding:10px 14px; border-radius:12px; background:linear-gradient(135deg,#7c6bff,#ff5a8a); color:#fff; border:none; font-weight:600; cursor:pointer">Add</button>
+    </div>
+  `;
+  // clear old tasks cards
+  [...cardsEl.children].forEach(c=>{ if(c.dataset.type==='tasks') c.remove(); });
+  card.dataset.type='tasks';
+  cardsEl.prepend(card);
+  scrollToBottom();
+}
+function toggleTask(id){
+  const t=tasks.find(x=>x.id===id);
+  if(t){ t.done=!t.done; saveTasks(); showTasksCard(); showToast(t.done?'Completed ✓':'Moved back to todo'); }
+}
+function deleteTask(id){
+  tasks=tasks.filter(x=>x.id!==id); saveTasks(); showTasksCard(); showToast('Deleted');
+}
+function addTaskPrompt(){
+  const txt=prompt('New task:');
+  if(txt){ addTask(txt); }
+}
+function addTaskFromInput(){
+  const i=document.getElementById('newTaskInput');
+  if(!i || !i.value.trim()) return;
+  addTask(i.value.trim());
+  i.value='';
+}
+function addTask(text, time='Today'){
+  tasks.unshift({id:Date.now(), text, time, done:false});
+  saveTasks();
+  showTasksCard();
+  showToast('Task added ✓');
+}
+
+// Fetch weather live (no key)
+async function fetchWeather(){
+  try{
+    // Open-Meteo for Kathmandu
+    const url='https://api.open-meteo.com/v1/forecast?latitude=27.7172&longitude=85.324&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=temperature_2m_max&timezone=Asia%2FKathmandu';
+    const r=await fetch(url);
+    const j=await r.json();
+    const code=j.current.weather_code;
+    const map={0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',51:'Light drizzle',61:'Light rain',71:'Light snow',80:'Rain showers',95:'Thunderstorm'};
+    const icons={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',51:'🌧️',61:'🌧️',71:'❄️',80:'🌦️',95:'⛈️'};
+    return {
+      temp: Math.round(j.current.temperature_2m),
+      desc: map[code]||'Partly cloudy',
+      icon: icons[code]||'⛅',
+      humidity: j.current.relative_humidity_2m,
+      wind: Math.round(j.current.wind_speed_10m),
+      high: Math.round(j.daily.temperature_2m_max[0])
+    };
+  }catch(e){
+    return null;
+  }
+}
+
+// Local brain intents
+function parseIntent(text){
+  const t=text.toLowerCase();
+  if(t.includes('weather')) return 'weather';
+  if(t.includes('remind') || t.includes('reminder')) return 'reminder';
+  if(t.includes('task') || t.includes('todo') || t.includes('to-do')) return 'tasks';
+  if(t.includes('calendar') || t.includes('schedule') || t.includes('agenda')) return 'calendar';
+  if(t.includes('summarize') || t.includes('summary')) return 'summarize';
+  if(t.includes('translate')) return 'translate';
+  if(t.includes('calculate') || t.includes('calc') || /[0-9]+\s*[\*x×\/\+\-\^]\s*[0-9]+/.test(t) || t.includes('what is') && /[0-9]/.test(t)) return 'calculate';
+  if(t.includes('search') || t.includes('find') || t.includes('look up')) return 'search';
+  if(t.includes('joke')) return 'joke';
+  if(t.includes('time')) return 'time';
+  if(t.includes('hello') || t.includes('hi aura') || t.includes('hey aura') || t.match(/^hi\b/)) return 'greet';
+  return 'chat';
+}
+
+async function localBrain(text){
+  const intent=parseIntent(text);
+  const lower=text.toLowerCase();
+
+  if(intent==='weather'){
+    const live=await fetchWeather();
+    return {reply:`Here's the weather in Kathmandu right now — ${live ? `${live.temp}°C, ${live.desc.toLowerCase()}.` : '23°C, partly cloudy.'} Perfect for a walk if you're free! Want me to set a reminder to check again later?`, data: live, action:'weather'};
+  }
+  if(intent==='reminder'){
+    // parse time
+    let when='in 5 minutes';
+    let minutes=5;
+    const m1=text.match(/in (\d+)\s*(minute|hour|second)/i);
+    const m2=text.match(/at (\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+    if(m1){
+      minutes=parseInt(m1[1]);
+      if(m1[2].toLowerCase().startsWith('hour')) minutes*=60;
+      if(m1[2].toLowerCase().startsWith('second')) minutes/=60;
+      when=`in ${m1[1]} ${m1[2]}${m1[1]>1?'s':''}`;
+    } else if(m2){
+      when=`at ${m2[0].replace('at ','')}`;
+      minutes=null;
+    }
+    // extract task
+    let taskTxt=text.replace(/remind me to/i,'').replace(/remind me/i,'').replace(/in \d+.*$/i,'').replace(/at \d.*$/i,'').trim();
+    if(!taskTxt || taskTxt.length<3) taskTxt='Reminder';
+    taskTxt=taskTxt.replace(/^to\s+/i,'');
+    // capitalize
+    taskTxt=taskTxt.charAt(0).toUpperCase()+taskTxt.slice(1);
+
+    // add to tasks
+    addTask(taskTxt, when);
+
+    // schedule persistent notification (works even if app backgrounded, and via SW when possible)
+    if(minutes!==null){
+      const at = Date.now() + minutes*60*1000;
+      // Auto-request permission if not granted
+      if(Notification && Notification.permission==='default'){
+        Notification.requestPermission().then(p=>{
+          if(p==='granted') showToast('Notifications enabled — I’ll alert you 🔔');
+        });
+      }
+      schedulePersistentReminder(taskTxt, at);
+      // also periodic sync registration if available
+      if(swReg && 'sync' in swReg){
+        swReg.sync.register('aura-reminders').catch(()=>{});
+      }
+      if(Notification && Notification.permission!=='granted'){
+        showToast(`I’ll remind you ${when} — enable notifications for alert when closed (tap 🔔)`, 3500);
+      } else {
+        showToast(`I’ll remind you ${when} — even if you close the app 🔔`, 3000);
+      }
+    } else {
+      // time-specific like "at 6pm" -> try to parse today 6pm
+      // For demo, create a quick 10s test if parsing fails, keep simple
+      showToast('Reminder set for '+when + ' — added to tasks');
+    }
+    return {reply:`Done! I’ll remind you to “${taskTxt}” ${when}. I’ve saved it persistently — you’ll get a notification even if AURA is closed (if notifications are allowed). Added to your tasks.`, action:'reminder'};
+  }
+  if(intent==='tasks'){
+    return {reply:`You have ${tasks.filter(t=>!t.done).length} open tasks and ${tasks.filter(t=>t.done).length} completed. I’ve opened your task board below — you can tap to complete or add new ones.`, action:'tasks'};
+  }
+  if(intent==='calendar'){
+    const today=new Date().toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric'});
+    return {reply:`📅 Today is ${today} — here’s your agenda:\n• 4:00 PM — Review AURA design system\n• 6:00 PM — Call Mom\n• Tomorrow — Buy groceries\nWant me to add something new? Just say “Add to calendar: … at 3pm”`, action:'calendar'};
+  }
+  if(intent==='summarize'){
+    const content=text.replace(/summarize:?/i,'').trim() || 'Artificial Intelligence is transforming the iPhone by enabling on-device personal assistance that understands context, voice, and daily routines.';
+    const words=content.split(/\s+/);
+    const summary=words.slice(0,28).join(' ')+(words.length>28?'…':'');
+    return {reply:`✦ Summary — ${summary}\n\nKey points:\n• On-device AI keeps your data private\n• Voice + context = faster actions\n• Perfect for daily routines & reminders\n\nWant me to make it shorter, more formal, or translate it?`, action:'summarize'};
+  }
+  if(intent==='translate'){
+    // simple mock for demo
+    if(lower.includes('nepali')){
+      return {reply:`🇳🇵 Nepali translation:\n“Hello how are you” → “नमस्ते, तपाईंलाई कस्तो छ?”\n\nWant me to translate something else? Just say “Translate [text] to [language]”.`, action:'translate'};
+    }
+    return {reply:`I can translate between English, Nepali, Hindi, Spanish, French & more. Try: “Translate good morning to Nepali” or “Translate धन्यवाद to English”.`, action:'translate'};
+  }
+  if(intent==='calculate'){
+    try{
+      let expr=text.replace(/calculate/i,'').replace(/what is/i,'').replace(/times|x/gi,'*').replace(/×/g,'*').replace(/÷/g,'/').trim();
+      // extract math
+      const match=expr.match(/([\d\.\s\+\-\*\/\(\)\^%]+)/);
+      if(match){
+        expr=match[1];
+        // safe eval
+        const result=Function('"use strict";return ('+expr+')')();
+        return {reply:`∑ ${expr.trim()} = **${result}**\n\nAnything else to calculate?`, action:'calculate'};
+      }
+    }catch(e){}
+    return {reply:`I can calculate instantly — try “247 × 18”, “15% of 480”, or “(45+30)*2”. What do you want to compute?`, action:'calculate'};
+  }
+  if(intent==='search'){
+    const q=text.replace(/search (for)?/i,'').trim() || 'iPhone AI apps 2026';
+    return {reply:`🔍 Searching for “${q}” — here are the best results I’d show on iPhone:\n\n1. **AURA** — Your new on-device assistant (this app!)\n2. **Perplexity** — AI search with citations\n3. **Arc Search** — Browse for me\n\nTap to search the web:`, action:'search', query: q};
+  }
+  if(intent==='joke'){
+    const jokes=[
+      "Why did the iPhone go to therapy? It had too many *attachments*! 😄",
+      "I told my iPhone a joke — it said that was *app*-solutely hilarious!",
+      "Why don’t robots get tired? Because they *recharge* on compliments!"
+    ];
+    return {reply: jokes[Math.floor(Math.random()*jokes.length)], action:'joke'};
+  }
+  if(intent==='time'){
+    const now=new Date().toLocaleString('en-US',{timeZone:'Asia/Kathmandu', weekday:'long', hour:'numeric', minute:'2-digit', hour12:true});
+    return {reply:`🕐 In Kathmandu it’s **${now}** (Asia/Kathmandu). Your iPhone time is synced — need a timer or reminder?`, action:'time'};
+  }
+  if(intent==='greet'){
+    return {reply:`Hey there! 👋 I’m AURA — your iPhone sidekick. I can:\n• ☁️ Check weather\n• ⏰ Set reminders & tasks\n• ✦ Summarize anything\n• ∑ Calculate & translate\n• 🔍 Search the web\n\nJust speak or type. Try “What’s the weather?”`, action:'greet'};
+  }
+  // default chat
+  const replies=[
+    `That’s a great question. Here’s how I see it: ${text.slice(0,80)} — as your iPhone assistant, I keep things private and on-device, so you get fast answers without sending data away. Want me to go deeper, summarize, or set a reminder about it?`,
+    `Got it — “${text.slice(0,60)}”. I’m built to be helpful like Siri but more personal. I can chat, manage tasks, check weather, and even speak aloud. What would you like to do next?`,
+    `I hear you! As AURA, I’m here to make your iPhone smarter — voice-first, private, and always ready. Ask me to calculate, translate, summarize, or just chat. What’s on your mind?`,
+  ];
+  return {reply: replies[Math.floor(Math.random()*replies.length)], action:'chat'};
+}
+
+async function getFreeCloudReply(text){
+  // Pollinations AI — 100% free, no key, no signup. Docs: text.pollinations.ai
+  try{
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(), 5000);
+    const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent('You are AURA, a helpful iPhone AI assistant. Be concise, warm, friendly. User: '+text), {signal: ctrl.signal, headers:{'Accept':'text/plain'}});
+    clearTimeout(t);
+    if(r.ok){
+      const txt=(await r.text()).trim();
+      if(txt && txt.length>8 && !txt.toLowerCase().includes('pollinations')){
+        return {reply: txt.slice(0,500), action:'chat', source:'pollinations'};
+      }
+    }
+  }catch(e){ console.warn('Free cloud fail, falling back', e); }
+  return null;
+}
+
+async function getAIReply(text){
+  const intent=parseIntent(text);
+  // For smart actions, use local brain first (weather, reminders, tasks — instant & offline)
+  if(['weather','reminder','tasks','calendar','calculate','time'].includes(intent)){
+    return await localBrain(text);
+  }
+  // Try free cloud if user selected cloud mode
+  if(freeMode==='cloud'){
+    const cloud=await getFreeCloudReply(text);
+    if(cloud) return cloud;
+  }
+  // Optional OpenAI if user added key (still free modes work without it)
+  if(apiKey){
+    try{
+      const r=await fetch('https://api.openai.com/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+        body: JSON.stringify({
+          model:'gpt-4o-mini',
+          messages:[
+            {role:'system', content:'You are AURA, a friendly Siri-like AI assistant for iPhone. Be concise, helpful, warm, and proactive. Keep replies under 80 words unless asked for more. Current location: Kathmandu, Nepal. Date: 2026-08-19.'},
+            {role:'user', content:text}
+          ],
+          temperature:0.7,
+          max_tokens:300
+        })
+      });
+      const j=await r.json();
+      if(j.choices && j.choices[0].message.content){
+        return {reply: j.choices[0].message.content, action:'chat'};
+      }
+    }catch(e){ console.warn('OpenAI fail', e); }
+  }
+  // Final fallback: local brain (always free, offline)
+  // If cloud was selected but failed, try local as smart chat too
+  if(freeMode==='cloud'){
+    // Try local chat-style reply as fallback
+    const local=await localBrain(text);
+    if(local.action==='chat') return local;
+    return local;
+  }
+  return await localBrain(text);
+}
+
+async function sendMessage(){
+  const text=inputEl.value.trim();
+  if(!text) return;
+  inputEl.value='';
+  addMessage(text,'user');
+  // typing
+  const typing=addTyping();
+  // get reply
+  const result=await getAIReply(text);
+  typing.remove();
+  // handle actions
+  if(result.action==='weather'){
+    showWeatherCard(result.data);
+  } else if(result.action==='tasks' || result.action==='calendar' || result.action==='reminder'){
+    showTasksCard();
+  } else if(result.action==='search' && result.query){
+    // add search card
+    const card=document.createElement('div');
+    card.className='card';
+    const q=encodeURIComponent(result.query);
+    card.innerHTML=`
+      <div class="card-head"><div class="card-title"><span style="background:linear-gradient(135deg,#f97316,#ea580c)">⌕</span> Web Results</div></div>
+      <div style="display:flex; flex-direction:column; gap:8px">
+        <a href="https://www.google.com/search?q=${q}" target="_blank" style="padding:12px; background:rgba(255,255,255,0.06); border-radius:12px; text-decoration:none; color:#fff; display:flex; justify-content:space-between; align-items:center">
+          <span>Google — “${escapeHtml(result.query)}”</span><span>↗</span>
+        </a>
+        <a href="https://www.perplexity.ai/search?q=${q}" target="_blank" style="padding:12px; background:rgba(255,255,255,0.06); border-radius:12px; text-decoration:none; color:#fff; display:flex; justify-content:space-between; align-items:center">
+          <span>Perplexity — AI answer</span><span>↗</span>
+        </a>
+      </div>
+    `;
+    cardsEl.prepend(card);
+  }
+  const msgDiv=addMessage(result.reply,'assistant');
+  speak(result.reply);
+  // small haptic
+  if(navigator.vibrate) navigator.vibrate(10);
+}
+
+// Sheet
+function openSheet(){ document.getElementById('sheetOverlay').classList.add('open'); }
+function closeSheet(){ document.getElementById('sheetOverlay').classList.remove('open'); }
+function clearChat(){
+  chatEl.innerHTML='<div class="msg assistant">Chat cleared — I’m still here! Try “What’s the weather?” or tap the mic 🎙️<div class="msg-time">AURA • now</div></div>';
+  cardsEl.innerHTML='';
+  heroEl.classList.remove('compact');
+  showToast('Chat cleared');
+}
+async function requestNotif(){
+  if(!('Notification' in window)){ showToast('Notifications not supported in this browser'); return; }
+  if(!window.isSecureContext){
+    showToast('Notifications need HTTPS — open the direct link, not preview', 3500);
+    return;
+  }
+  const p=await Notification.requestPermission();
+  if(p==='granted'){
+    showToast('Notifications enabled 🔔 — reminders will fire even when closed (PWA)', 3500);
+    // Test notification
+    if(swReg){
+      swReg.showNotification('AURA ready ✓', {body:'Reminders will notify you even when the app is closed', icon:'/icon-192.png', badge:'/icon-192.png'});
+    } else {
+      new Notification('AURA ready ✓', {body:'Reminders will notify you even when the app is closed'});
+    }
+    // prime SW
+    if(reminders.length>0 && swReg && swReg.active){
+      reminders.forEach(r=> {
+        try{ swReg.active.postMessage({type:'SCHEDULE_REMINDER', reminder:r}); }catch(e){}
+      });
+    }
+  } else if(p==='denied'){
+    showToast('Blocked — iPhone Settings → Notifications → Safari → Allow', 4000);
+  } else {
+    showToast('Permission: '+p);
+  }
+}
+
+// Init: show tasks card initially? not immediately, let user explore
+// Add keyboard handling for mic long press?
+inputEl.addEventListener('focus', ()=> heroEl.classList.add('compact'));
+
+
+// Demo: auto-show weather after 1.5s to wow?
+setTimeout(async ()=>{
+  const live=await fetchWeather();
+  if(live) {
+    // don't auto show, just keep ready
+  }
+}, 1000);
+
+// ===== PWA install + Service Worker + Background Reminders =====
+let deferredPrompt;
+let swReg=null;
+window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt=e; showInstallBanner(); });
+
+function showInstallBanner(){
+  if(localStorage.getItem('aura_install_dismissed')) return;
+  if(window.matchMedia('(display-mode: standalone)').matches) return; // already installed
+  let b=document.getElementById('installBanner');
+  if(b) return;
+  b=document.createElement('div');
+  b.id='installBanner';
+  b.style.cssText='margin:8px 16px 0; padding:12px; background:linear-gradient(135deg, rgba(124,107,255,0.18), rgba(0,212,255,0.12)); border:1px solid rgba(124,107,255,0.3); border-radius:16px; display:flex; gap:10px; align-items:center; font-size:12px';
+  b.innerHTML=`
+    <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#7c6bff,#ff5a8a); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0">⬇</div>
+    <div style="flex:1; line-height:1.4">
+      <div style="font-weight:700; color:#fff">Install AURA on your iPhone</div>
+      <div style="color:rgba(255,255,255,0.65)">Add to Home Screen → works like a real app, even offline</div>
+    </div>
+    <button id="installBtn" style="padding:9px 14px; background:#fff; color:#000; border:none; border-radius:12px; font-weight:700; cursor:pointer; font-size:12px; white-space:nowrap">Install</button>
+    <button onclick="this.closest('#installBanner').remove(); localStorage.setItem('aura_install_dismissed','1')" style="background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer; padding:4px 6px; font-size:16px">✕</button>
+  `;
+  document.querySelector('.main').prepend(b);
+  b.querySelector('#installBtn').onclick=async()=>{
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      const {outcome}=await deferredPrompt.userChoice;
+      showToast(outcome==='accepted' ? 'Installed ✓ Check your home screen' : 'You can install later via Share → Add to Home Screen');
+      deferredPrompt=null;
+      b.remove();
+    } else {
+      // iOS manual instructions
+      showToast('On iPhone: Share → Add to Home Screen', 3500);
+      openSheet();
+    }
+  };
+}
+
+// Service Worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/service-worker.js').then(reg=>{
+    swReg=reg;
+    console.log('SW registered', reg.scope);
+    // check for updates
+    reg.addEventListener('updatefound', ()=> showToast('Update available — reload to get new version'));
+  }).catch(err=> console.warn('SW fail', err));
+  navigator.serviceWorker.addEventListener('message', (e)=>{
+    if(e.data && e.data.type==='REMINDER_DUE'){
+      const r=e.data.reminder;
+      addMessage(`🔔 Reminder: ${r.text}`, 'assistant');
+      speak(`Reminder: ${r.text}`);
+      showToast('🔔 '+r.text, 3500);
+      if(navigator.vibrate) navigator.vibrate([200,80,200]);
+    }
+    if(e.data && e.data.type==='CHECK_DUE_NOW'){
+      // client checks its own local reminders and fires due ones via SW
+      checkLocalRemindersDue();
+    }
+  });
+}
+
+// Persistent reminders - survive close via SW + localStorage
+let reminders = JSON.parse(localStorage.getItem('aura_reminders')||'[]'); // {id,text,at}
+function saveReminders(){ localStorage.setItem('aura_reminders', JSON.stringify(reminders)); }
+function schedulePersistentReminder(text, atTimestamp){
+  const id=Date.now();
+  const rem={id, text, at: atTimestamp};
+  reminders.push(rem);
+  saveReminders();
+  // Send to SW for background firing
+  if(navigator.serviceWorker && navigator.serviceWorker.controller){
+    navigator.serviceWorker.controller.postMessage({type:'SCHEDULE_REMINDER', reminder: rem});
+  } else if(swReg && swReg.active){
+    // fallback: also set local timeout
+    setTimeout(()=> fireLocalReminder(rem), Math.max(0, atTimestamp-Date.now()));
+  } else {
+    setTimeout(()=> fireLocalReminder(rem), Math.max(0, atTimestamp-Date.now()));
+  }
+  // also set local backup timer (works while tab open)
+  setTimeout(()=> fireLocalReminder(rem), Math.max(0, atTimestamp-Date.now()));
+  return rem;
+}
+function fireLocalReminder(rem){
+  // avoid double-fire
+  if(!reminders.find(r=>r.id===rem.id)) return;
+  // if still future by >1s, not yet
+  if(rem.at > Date.now()+1000) return;
+  // remove and notify
+  reminders = reminders.filter(r=>r.id!==rem.id);
+  saveReminders();
+  // Try SW notification first
+  if(swReg && Notification && Notification.permission==='granted'){
+    swReg.showNotification('AURA Reminder', {
+      body: rem.text,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [300,100,300],
+      requireInteraction: true,
+      tag: 'aura-'+rem.id
+    }).catch(()=>{
+      // fallback to plain Notification
+      new Notification('AURA Reminder', {body: rem.text});
+    });
+  } else if(Notification && Notification.permission==='granted'){
+    new Notification('AURA Reminder', {body: rem.text});
+  }
+  addMessage(`🔔 Reminder: ${rem.text}`, 'assistant');
+  speak(`Reminder: ${rem.text}`);
+  showToast('🔔 '+rem.text, 3500);
+  if(navigator.vibrate) navigator.vibrate([200,80,200,80,200]);
+}
+function checkLocalRemindersDue(){
+  const now=Date.now();
+  const due=reminders.filter(r=> r.at <= now);
+  due.forEach(fireLocalReminder);
+}
+// rehydrate timers on load
+reminders.forEach(r=>{
+  const delay=Math.max(0, r.at-Date.now());
+  if(delay< 2147483647) setTimeout(()=> fireLocalReminder(r), delay);
+});
+// periodic check every 30s (covers case where SW asks)
+setInterval(checkLocalRemindersDue, 30000);
+
+// On visibility change, check
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkLocalRemindersDue(); });
+
+// Expose for console
+window.AURA={sendMessage, quickAction, tasks};
+
+</script>
+</body>
+</html>

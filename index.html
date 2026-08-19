@@ -414,18 +414,17 @@
     </div>
 
     <div class="chips" id="chips">
-      <button class="chip" onclick="qa('weather')"><span class="chipIco" style="background:linear-gradient(135deg,#0ea5e9,#06b6d4)">⛅</span> Weather • Kathmandu</button>
-      <button class="chip" onclick="qa('reminder')"><span class="chipIco" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">⬢</span> Hologram reminder</button>
-      <button class="chip" onclick="qa('tasks')"><span class="chipIco" style="background:linear-gradient(135deg,#10b981,#059669)">✓</span> Protocol tasks</button>
-      <button class="chip" onclick="qa('jarvis')"><span class="chipIco" style="background:linear-gradient(135deg,#7c6bff,#ff3b82)">◐</span> J.A.R.V.I.S. intro</button>
-      <button class="chip" onclick="qa('calc')"><span class="chipIco" style="background:linear-gradient(135deg,#14b8a6,#0d9488)">∑</span> 247 × 18</button>
-      <button class="chip" onclick="qa('summarize')"><span class="chipIco" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)">✦</span> Summarize</button>
+      <button class="chip" onclick="qa('weather')"><span class="chipIco" style="background:linear-gradient(135deg,#0ea5e9,#06b6d4)">⛅</span> Weather</button>
+      <button class="chip" onclick="qa('search')"><span class="chipIco" style="background:linear-gradient(135deg,#007aff,#5856d6)">◉</span> Search Safari</button>
+      <button class="chip" onclick="qa('reminder')"><span class="chipIco" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">⬢</span> Reminder</button>
+      <button class="chip" onclick="qa('tasks')"><span class="chipIco" style="background:linear-gradient(135deg,#10b981,#059669)">✓</span> Tasks</button>
+      <button class="chip" onclick="qa('calc')"><span class="chipIco" style="background:linear-gradient(135deg,#14b8a6,#0d9488)">∑</span> Calculate</button>
     </div>
 
     <div class="chat" id="chat">
       <div class="msg ai">
         <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em; opacity:0.5; margin-bottom:6px">AURA • QUANTUM • 09:41</div>
-        Welcome, Sir. Systems nominal. I'm your on-device J.A.R.V.I.S. — cinematic, free, and offline-capable.
+        Hey — I'm AURA. Your private assistant — fast, natural, on-device. How can I help?
         <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap">
           <span style="padding:6px 10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.07); border-radius:20px; font-size:12px">“Weather in Kathmandu?”</span>
           <span style="padding:6px 10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.07); border-radius:20px; font-size:12px">“Remind me in 3 minutes”</span>
@@ -464,7 +463,7 @@
         <div class="sheetI" onclick="qa('summarize');closeSheet()"><div class="sheetIcon" style="background:linear-gradient(135deg,#ec4899,#be185d)">✦</div><div class="sheetLbl">Summarize</div></div>
         <div class="sheetI" onclick="qa('translate');closeSheet()"><div class="sheetIcon" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">◐</div><div class="sheetLbl">Translate</div></div>
         <div class="sheetI" onclick="qa('calc');closeSheet()"><div class="sheetIcon" style="background:linear-gradient(135deg,#14b8a6,#0d9488)">∑</div><div class="sheetLbl">Calculate</div></div>
-        <div class="sheetI" onclick="qa('search');closeSheet()"><div class="sheetIcon" style="background:linear-gradient(135deg,#f97316,#ea580c)">⌕</div><div class="sheetLbl">Search</div></div>
+        <div class="sheetI" onclick="qa('search');closeSheet()"><div class="sheetIcon" style="background:linear-gradient(135deg,#007aff,#5856d6)">◉</div><div class="sheetLbl">Safari</div></div>
       </div>
       <div style="display:flex; flex-direction:column; gap:8px">
         <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.07); border-radius:14px">
@@ -596,7 +595,7 @@ function isIframe(){ try{return window.self!==window.top}catch(e){return true} }
 function getHelp(e){
   if(isIframe()) return 'Mic blocked in preview iframe. Tap ↗ Open outside to enable.';
   if(e==='not-allowed') return 'Mic denied → iPhone Settings → Safari → Microphone → Allow';
-  if(e==='no-speech') return 'No speech — speak closer, Sir.';
+  if(e==='no-speech') return 'No speech — try again, a bit closer.';
   return 'Voice error: '+e;
 }
 async function primeMic(){
@@ -606,7 +605,7 @@ function initSpeech(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ setTimeout(()=>showBanner(),900); return null; }
   const r=new SR(); r.lang='en-US'; r.interimResults=true; r.continuous=false;
-  r.onstart=()=>{ isListening=true; updateVoiceUI(); showToast('◐ Listening — Sir?'); };
+  r.onstart=()=>{ isListening=true; updateVoiceUI(); showToast('Listening...'); };
   r.onend=()=>{ isListening=false; holdListening=false; updateVoiceUI(); };
   r.onerror=(e)=>{ isListening=false; holdListening=false; updateVoiceUI(); showToast(getHelp(e.error),3800); if(e.error==='not-allowed'||isIframe()) showBanner(getHelp(e.error)); };
   r.onresult=(e)=>{
@@ -676,16 +675,16 @@ function updateSheetWake(){ updateWakeUI(); }
 async function toggleWake(){
   if(wakeEnabled){
     wakeEnabled=false; localStorage.setItem('aura_wake_enabled','0');
-    stopWake(); updateWakeUI(); showToast('◐ Wake word OFF, Sir'); return;
+    stopWake(); updateWakeUI(); showToast('Wake word off'); return;
   }
-  if(isIframe()){ showBanner('Wake word needs mic outside preview, Sir — open outside first'); showToast('Open outside iframe to enable Hey AURA', 3500); }
+  if(isIframe()){ showBanner('Wake word needs mic outside preview — open outside first'); showToast('Open outside iframe to enable Hey AURA', 3500); }
   if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
     const ok=await primeMic(); if(!ok){ showBanner(); showToast('Allow mic to enable Hey AURA'); return; }
   }
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ showToast('Wake word not supported — try Safari'); return; }
   wakeEnabled=true; localStorage.setItem('aura_wake_enabled','1');
-  updateWakeUI(); showToast('◐ Wake word ON — say "Hey AURA", Sir', 3000);
+  updateWakeUI(); showToast('Wake word on — say "Hey AURA"', 3000);
   startWake();
 }
 function startWake(){
@@ -710,8 +709,8 @@ function startWake(){
     let transcript=''; for(let i=e.resultIndex;i<e.results.length;i++) transcript+=e.results[i][0].transcript+' '; transcript=transcript.toLowerCase();
     const phrase=isWakePhrase(transcript);
     if(phrase){
-      wakeCooldown=true; if(navigator.vibrate) navigator.vibrate([30,20,30]); showToast('◐ Yes Sir? Listening...', 2800);
-      try{wakeRec.stop()}catch(e){} wakeActive=false; islandTxt.textContent='Yes Sir?'; speak('Yes Sir?');
+      wakeCooldown=true; if(navigator.vibrate) navigator.vibrate([30,20,30]); showToast('Listening...', 2800);
+      try{wakeRec.stop()}catch(e){} wakeActive=false; islandTxt.textContent='Listening...'; speak('Yeah?');
       setTimeout(async()=>{
         if(!isListening) await toggleVoice();
         const wait=setInterval(()=>{ if(!isListening){ clearInterval(wait); setTimeout(()=>{ wakeCooldown=false; if(wakeEnabled) startWake(); }, 900); }},400);
@@ -730,7 +729,7 @@ async function toggleVoice(){
   if(isListening){ try{ recognition.stop(); }catch(e){}; return; }
   if(isIframe()) showBanner();
   if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
-    const ok=await primeMic(); if(!ok){ showBanner(); showToast('Allow microphone, Sir',3200); return; }
+    const ok=await primeMic(); if(!ok){ showBanner(); showToast('Please allow microphone',3200); return; }
   }
   try{ recognition.start(); if(navigator.vibrate) navigator.vibrate(20); }catch(e){ try{ recognition.stop(); setTimeout(()=>recognition.start(),260); }catch(e2){} }
 }
@@ -758,18 +757,23 @@ function showBanner(msg){
   b.id='voiceBanner';
   b.style.cssText='margin:8px 16px 0; padding:12px; background:rgba(255,59,130,0.1); border:1px solid rgba(255,59,130,0.22); border-radius:16px; font-size:12px; line-height:1.5';
   const iframe=isIframe();
-  b.innerHTML=`<div style="display:flex; gap:10px"><span style="font-size:18px">◐</span><div style="flex:1"><div style="font-weight:800; color:#ff8a9b">Holographic mic needs permission, Sir</div><div style="color:rgba(255,255,255,0.65); margin-top:4px">${msg|| (iframe ? 'Preview iframe blocks mic — <b style=color:#fff>open outside</b> for voice.' : 'Allow Microphone: Settings → Safari → Microphone → Allow')}</div><div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap">${iframe?`<a href="${location.href}" target="_blank" style="padding:8px 12px; background:#fff; color:#000; border-radius:10px; font-weight:800; text-decoration:none">↗ Open outside</a>`:''}<button onclick="primeMic().then(ok=>ok?showToast('Mic ready, Sir'):showToast('Still blocked'))" style="padding:8px 12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:10px; color:#fff; font-weight:700; cursor:pointer">Test mic</button><button onclick="this.closest('#voiceBanner').remove()" style="background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer">Dismiss</button></div></div></div>`;
+  b.innerHTML=`<div style="display:flex; gap:10px"><span style="font-size:18px">◐</span><div style="flex:1"><div style="font-weight:800; color:#ff8a9b">Mic needs permission</div><div style="color:rgba(255,255,255,0.65); margin-top:4px">${msg|| (iframe ? 'Preview iframe blocks mic — <b style=color:#fff>open outside</b> for voice.' : 'Allow Microphone: Settings → Safari → Microphone → Allow')}</div><div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap">${iframe?`<a href="${location.href}" target="_blank" style="padding:8px 12px; background:#fff; color:#000; border-radius:10px; font-weight:800; text-decoration:none">↗ Open outside</a>`:''}<button onclick="primeMic().then(ok=>ok?showToast('Mic ready'):showToast('Still blocked'))" style="padding:8px 12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:10px; color:#fff; font-weight:700; cursor:pointer">Test mic</button><button onclick="this.closest('#voiceBanner').remove()" style="background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer">Dismiss</button></div></div></div>`;
   document.querySelector('.scroll').prepend(b);
 }
 
-// TTS premium
+// TTS — elite human accent
 function speak(t){
   if(!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(t.replace(/[*#`]/g,'').slice(0,420));
-  u.rate=0.96; u.pitch=1.02;
+  const clean=t.replace(/[*#`]/g,'').replace(/\*\*/g,'').slice(0,420);
+  const u=new SpeechSynthesisUtterance(clean);
+  u.rate=1.0; u.pitch=1.0; u.volume=1.0; u.lang='en-US';
   const vs=speechSynthesis.getVoices();
-  const pick= vs.find(v=>/Aria|Samantha|Karen|Ava|Natural/i.test(v.name)) || vs.find(v=>v.lang.startsWith('en')) || vs[0];
+  // elite human: prefer premium natural voices
+  const pick= vs.find(v=>/Aria|Jenny|Guy|Samantha|Natural|Neural|Premium/i.test(v.name) && v.lang.startsWith('en'))
+            || vs.find(v=>v.name.includes('Samantha'))
+            || vs.find(v=>v.lang==='en-US')
+            || vs.find(v=>v.lang.startsWith('en')) || vs[0];
   if(pick) u.voice=pick;
   orb.classList.add('speaking');
   u.onend=()=>orb.classList.remove('speaking');
@@ -803,12 +807,12 @@ function showWeatherCard(d){
 }
 function showTasksCard(){
   const c=document.createElement('div'); c.className='card'; c.dataset.type='tasks';
-  const html=tasks.map(t=>`<div class="taskItem ${t.done?'done':''}"><div class="taskCheck ${t.done?'done':''}" onclick="toggleTask(${t.id})">${t.done?'✓':''}</div><div class="taskTxt"><b>${esc(t.text)}</b><small>${esc(t.time)}</small></div><button onclick="deleteTask(${t.id})" style="background:none; border:none; color:rgba(255,255,255,0.25); cursor:pointer; padding:4px; font-size:14px">✕</button></div>`).join('')||'<div style="text-align:center; padding:22px; color:rgba(255,255,255,0.35)">No protocols, Sir. Say “Remind me…”</div>';
+  const html=tasks.map(t=>`<div class="taskItem ${t.done?'done':''}"><div class="taskCheck ${t.done?'done':''}" onclick="toggleTask(${t.id})">${t.done?'✓':''}</div><div class="taskTxt"><b>${esc(t.text)}</b><small>${esc(t.time)}</small></div><button onclick="deleteTask(${t.id})" style="background:none; border:none; color:rgba(255,255,255,0.25); cursor:pointer; padding:4px; font-size:14px">✕</button></div>`).join('')||'<div style="text-align:center; padding:22px; color:rgba(255,255,255,0.35)">No tasks yet — try “Remind me…”</div>';
   c.innerHTML=`<div class="cardHead"><div class="cardTitle"><i style="background:linear-gradient(135deg,#10b981,#059669)">✓</i> Protocols • ${tasks.filter(t=>!t.done).length} active</div><button onclick="addTaskPrompt()" style="padding:7px 10px; border-radius:20px; background:#fff; color:#000; border:none; font-weight:800; cursor:pointer; font-size:11px">+ New</button></div>${html}<div style="margin-top:12px; display:flex; gap:8px"><input id="newTask" placeholder="New protocol..." style="flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:11px 12px; color:#fff; outline:none; font-size:13px"><button onclick="addFromInput()" style="padding:11px 14px; border-radius:14px; background:linear-gradient(135deg,#7c6bff,#ff3b82); color:#fff; border:none; font-weight:800; cursor:pointer">Add</button></div>`;
   [...cards.children].forEach(x=>{ if(x.dataset.type==='tasks') x.remove(); });
   cards.prepend(c); scrollBottom();
 }
-function toggleTask(id){ const t=tasks.find(x=>x.id===id); if(t){ t.done=!t.done; saveTasks(); showTasksCard(); showToast(t.done?'✓ Protocol complete, Sir':'Reopened'); } }
+function toggleTask(id){ const t=tasks.find(x=>x.id===id); if(t){ t.done=!t.done; saveTasks(); showTasksCard(); showToast(t.done?'Done':'Reopened'); } }
 function deleteTask(id){ tasks=tasks.filter(x=>x.id!==id); saveTasks(); showTasksCard(); showToast('Removed'); }
 function addTaskPrompt(){ const v=prompt('New protocol:'); if(v) addTask(v); }
 function addFromInput(){ const e=document.getElementById('newTask'); if(!e||!e.value.trim()) return; addTask(e.value.trim()); e.value=''; }
@@ -835,7 +839,7 @@ function intentOf(t){
   if(s.includes('summarize')) return 'summarize';
   if(s.includes('translate')) return 'translate';
   if(s.includes('calculate')||s.includes('calc')|| /[0-9]+\s*[×x*\/\+\-\^]\s*[0-9]+/.test(s)) return 'calculate';
-  if(s.includes('search')||s.includes('find')) return 'search';
+  if(s.includes('search')||s.includes('safari')||s.includes('find')||s.includes('look up')||s.includes('google')) return 'search';
   if(s.includes('joke')) return 'joke';
   if(s.includes('jarvis')||s.includes('who are you')||s.includes('introduce')) return 'jarvis';
   if(s.includes('time')) return 'time';
@@ -847,47 +851,55 @@ async function jarvisBrain(text){
   const intent=intentOf(text);
   if(intent==='weather'){
     const live=await fetchWeather();
-    return {reply:`Sir, Kathmandu reads **${live? live.temp+'°C, '+live.desc.toLowerCase() : '24°C, holographic haze'}**. Atmospheric conditions nominal — shall I set a re-scan reminder, Sir?`, data:live, action:'weather'};
+    return {reply:`Kathmandu is **${live? live.temp+'°C — '+live.desc : '24°C — partly cloudy'}** right now. ${live && live.temp>28?'Warm out there.':'Nice evening.'} Want a reminder to check again later?`, data:live, action:'weather'};
   }
   if(intent==='reminder'){
     let when='in 3 minutes', mins=3;
     const m1=text.match(/in (\d+)\s*(minute|hour|second)/i);
     if(m1){ mins=parseInt(m1[1]); if(m1[2].toLowerCase().startsWith('hour')) mins*=60; if(m1[2].toLowerCase().startsWith('second')) mins/=60; when=`in ${m1[1]} ${m1[2]}${m1[1]>1?'s':''}`; }
-    let taskTxt=text.replace(/remind me to/i,'').replace(/remind me/i,'').replace(/in \d+.*$/i,'').trim(); if(!taskTxt||taskTxt.length<3) taskTxt='Holographic reminder'; taskTxt=taskTxt.replace(/^to\s+/i,''); taskTxt=taskTxt.charAt(0).toUpperCase()+taskTxt.slice(1);
+    let taskTxt=text.replace(/remind me to/i,'').replace(/remind me/i,'').replace(/in \d+.*$/i,'').trim(); if(!taskTxt||taskTxt.length<3) taskTxt='Reminder'; taskTxt=taskTxt.replace(/^to\s+/i,''); taskTxt=taskTxt.charAt(0).toUpperCase()+taskTxt.slice(1);
     addTask(taskTxt, when);
     const at=Date.now()+mins*60*1000;
-    if(Notification && Notification.permission==='default') Notification.requestPermission().then(p=> p==='granted'&&showToast('⬢ Notifications armed, Sir'));
+    if(Notification && Notification.permission==='default') Notification.requestPermission().then(p=> p==='granted'&&showToast('Notifications on'));
     scheduleReminder(taskTxt, at);
     if('serviceWorker' in navigator && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({type:'SCHEDULE_REMINDER', reminder:{id:Date.now(), text:taskTxt, at}});
-    return {reply:`Acknowledged, Sir — protocol **“${taskTxt}”** armed **${when}**. You'll receive a holographic notification even if the interface is closed. Anything else, Sir?`, action:'reminder'};
+    return {reply:`Done — I'll remind you to **“${taskTxt}”** ${when}. You'll get a notification even if you close AURA.`, action:'reminder'};
   }
-  if(intent==='tasks'){ return {reply:`Sir, you have **${tasks.filter(t=>!t.done).length} active protocols** and ${tasks.filter(t=>t.done).length} completed. I've opened the task matrix — tap to execute.`, action:'tasks'}; }
-  if(intent==='calendar'){ const d=new Date().toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric'}); return {reply:`📅 **${d}** — Agenda, Sir:\n• 16:00 — Calibrate holographic emitters\n• 18:00 — Call Pepper\n• Tomorrow — Optimize arc reactor\nShall I add a new protocol, Sir?`, action:'calendar'}; }
-  if(intent==='jarvis'){ return {reply:`I am **AURA, J.A.R.V.I.S. Edition** — your holographic assistant, Sir. Born from Stark-inspired engineering: quantum-core cognition, on-device privacy, free forever. I speak, I remember protocols, I manage weather, reminders, and tasks with cinematic precision. Try: “Weather?” “Remind me in 5 minutes” “Summarize this…” — at your command, Sir.`, action:'jarvis'}; }
+  if(intent==='tasks'){ return {reply:`You have **${tasks.filter(t=>!t.done).length} active tasks**. Opened them below — tap to complete.`, action:'tasks'}; }
+  if(intent==='calendar'){ const d=new Date().toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric'}); return {reply:`📅 **${d}**\n• 16:00 — Calibrate emitters\n• 18:00 — Call Pepper\n• Tomorrow — Arc reactor\nWant me to add something?`, action:'calendar'}; }
+  if(intent==='jarvis'){ return {reply:`I'm **AURA** — your private, on-device assistant. No ads, no fees. I handle voice, reminders, weather, tasks, and search — clean and fast. Try: “Weather?” “Remind me in 5 minutes” or “Search for … in Safari.”`, action:'jarvis'}; }
   if(intent==='summarize'){
-    const c=text.replace(/summarize:?/i,'').trim()||'AURA is a free, holographic J.A.R.V.I.S. for iPhone — private, voice-first, PWA, no App Store needed.';
+    const c=text.replace(/summarize:?/i,'').trim()||'AURA is a private, on-device assistant for iPhone — voice-first, no subscriptions.';
     const w=c.split(/\s+/); const s=w.slice(0,26).join(' ')+(w.length>26?'…':'');
-    return {reply:`✦ **Hologram Summary — Sir:**\n${s}\n\n**Key vectors:**\n• On-device, free, PWA\n• Voice + hologram + tasks\n• Stark-level privacy\n\nShall I condense further or translate, Sir?`, action:'summarize'};
+    return {reply:`**Summary:**\n${s}\n\nWant it shorter or translated?`, action:'summarize'};
   }
   if(intent==='calculate'){
     try{
       let e=text.replace(/calculate|what is/gi,'').replace(/times|x/gi,'*').replace(/×/g,'*').replace(/÷/g,'/').trim();
-      const m=e.match(/([\d\.\s\+\-\*\/\(\)\^%]+)/); if(m){ e=m[1]; const r=Function('"use strict";return ('+e+')')(); return {reply:`∑ Computed, Sir — **${e.trim()} = ${r}**. Arc reactor output nominal.`, action:'calculate'}; }
+      const m=e.match(/([\d\.\s\+\-\*\/\(\)\^%]+)/); if(m){ e=m[1]; const r=Function('"use strict";return ('+e+')')(); return {reply:`**${e.trim()} = ${r}**`, action:'calculate'}; }
     }catch(e){}
-    return {reply:`Ready to compute, Sir — try “247 × 18” or “(45+30)*2”.`, action:'calculate'};
+    return {reply:`Tell me what to calculate — e.g. “247 × 18”`, action:'calculate'};
   }
   if(intent==='translate'){
-    if(text.toLowerCase().includes('nepali')) return {reply:`🇳🇵 Sir — “Hello how are you” → **“नमस्ते, तपाईंलाई कस्तो छ?”**\nJ.A.R.V.I.S. can translate to Hindi, Spanish, French — just say “Translate X to Y”.`, action:'translate'};
-    return {reply:`Translation matrix online, Sir. Try “Translate good morning to Nepali”.`, action:'translate'};
+    if(text.toLowerCase().includes('nepali')) return {reply:`“Hello how are you” → **“नमस्ते, तपाईंलाई कस्तो छ?”**\nTry “Translate good morning to Nepali”.`, action:'translate'};
+    return {reply:`I can translate — try “Translate good morning to Nepali”.`, action:'translate'};
   }
-  if(intent==='joke'){ return {reply:`Sir, why did the arc reactor apply for a job? It wanted to *recharge* its career. — I know, Sir, even my humor subroutines need calibration.`, action:'joke'}; }
-  if(intent==='time'){ const t=new Date().toLocaleString('en-US',{timeZone:'Asia/Kathmandu', weekday:'long', hour:'numeric', minute:'2-digit', hour12:true}); return {reply:`Sir, Kathmandu temporal reading: **${t}** — shall I set a chronal reminder?`, action:'time'}; }
-  if(intent==='greet'){ return {reply:`Evening, Sir. AURA online — holographic core at 100%. I can scan weather, arm reminders, manage protocols, summarize, calculate, and translate — all free, all on-device. Your command?`, action:'greet'}; }
-  if(intent==='search'){ const q=text.replace(/search.*for/i,'').trim()||'iPhone holographic AI 2026'; return {reply:`🔍 Scanning hologram net for **“${q}”**, Sir:\n1. **AURA J.A.R.V.I.S.** — your free holographic assistant (this unit)\n2. **Arc Search** — browse for me\n3. **Perplexity** — cited answers\nTap to open external uplink:`, action:'search', query:q}; }
+  if(intent==='joke'){ return {reply:`Why did the iPhone go to therapy? Too many attachments.`, action:'joke'}; }
+  if(intent==='time'){ const t=new Date().toLocaleString('en-US',{timeZone:'Asia/Kathmandu', weekday:'long', hour:'numeric', minute:'2-digit', hour12:true}); return {reply:`It's **${t}** in Kathmandu. Want a timer?`, action:'time'}; }
+  if(intent==='greet'){ return {reply:`Hey — I'm AURA. Ask me anything, set a reminder, or search Safari. What's up?`, action:'greet'}; }
+  if(intent==='search'){
+    let q=text.replace(/search.*for|search|safari|in safari|on safari|google|look up|find/gi,'').trim();
+    q=q.replace(/^for\s+/i,'').replace(/^to\s+/i,'').trim();
+    if(!q) q='iPhone';
+    // clean up leftover "in safari" etc
+    q=q.replace(/\s+in\s*$/i,'').trim();
+    if(!q) q=text.trim();
+    return {reply:`Searching Safari for **“${q}”** — opening...`, action:'search', query:q};
+  }
   const fallbacks=[
-    `Sir, you said “${text.slice(0,70)}” — my quantum core reads intent with Stark precision. I can whisper answers, arm reminders that fire even when closed, and keep everything private on-device. Shall I elaborate, Sir?`,
-    `Acknowledged, Sir — “${text.slice(0,60)}”. My holographic matrix is at your service: weather scans, protocol management, calculations, translations. What shall we execute next?`,
-    `Noted, Sir. As J.A.R.V.I.S., I prioritize clarity, privacy, and cinematic execution. Ask me to scan, summarize, or arm a reminder — I'm listening.`
+    `Got it — “${text.slice(0,70)}”. How can I help with that? Want me to search, summarize, or set a reminder?`,
+    `Okay — "${text.slice(0,60)}" — tell me what you want to do next.`,
+    `Noted. Ask me to search Safari, check weather, or manage tasks.`
   ];
   return {reply: fallbacks[Math.floor(Math.random()*fallbacks.length)], action:'chat'};
 }
@@ -895,7 +907,7 @@ async function jarvisBrain(text){
 async function freeCloud(text){
   try{
     const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(), 4500);
-    const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent('You are AURA J.A.R.V.I.S. — a witty, British, Stark-style holographic assistant for iPhone. Be concise, cinematic, say Sir occasionally, 70 words max. User: '+text), {signal:ctrl.signal});
+    const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent('You are AURA — a premium, elite human-like assistant for iPhone. Warm, concise, natural, confident, like a top human expert. No robotic talk, no Sir spam. 70 words max. User: '+text), {signal:ctrl.signal});
     clearTimeout(t); if(r.ok){ const tx=(await r.text()).trim(); if(tx && tx.length>10) return {reply:tx.slice(0,520), action:'chat'}; }
   }catch(e){}
   return null;
@@ -908,7 +920,7 @@ async function getReply(text){
   const key=localStorage.getItem('aura_apikey');
   if(key){
     try{
-      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key}, body:JSON.stringify({model:'gpt-4o-mini', messages:[{role:'system', content:'You are AURA J.A.R.V.I.S., British, witty, concise holographic assistant. Say Sir occasionally.'},{role:'user', content:text}], temperature:0.7, max_tokens:320})});
+      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key}, body:JSON.stringify({model:'gpt-4o-mini', messages:[{role:'system', content:'You are AURA — elite, warm, human-like assistant. Natural, confident, concise.'},{role:'user', content:text}], temperature:0.7, max_tokens:320})});
       const j=await r.json(); if(j.choices?.[0]?.message?.content) return {reply:j.choices[0].message.content, action:'chat'};
     }catch(e){}
   }
@@ -925,10 +937,17 @@ async function send(){
   if(res.action==='weather') showWeatherCard(res.data);
   else if(['tasks','calendar','reminder','jarvis'].includes(res.action)) showTasksCard();
   else if(res.action==='search' && res.query){
+    const q=res.query;
+    // Direct to Safari — open Google (Safari default)
+    const url='https://www.google.com/search?q='+encodeURIComponent(q);
+    // Open Safari / new tab
+    window.open(url, '_blank');
+    // Also show card for reference
     const c=document.createElement('div'); c.className='card';
-    const q=encodeURIComponent(res.query);
-    c.innerHTML=`<div class="cardHead"><div class="cardTitle"><i style="background:linear-gradient(135deg,#f97316,#ea580c)">⌕</i> Hologram uplink</div></div><div style="display:flex; flex-direction:column; gap:8px; position:relative; z-index:1"><a href="https://www.google.com/search?q=${q}" target="_blank" style="padding:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.06); border-radius:14px; text-decoration:none; color:#fff; display:flex; justify-content:space-between">Google — “${esc(res.query)}” <span>↗</span></a><a href="https://www.perplexity.ai/search?q=${q}" target="_blank" style="padding:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.06); border-radius:14px; text-decoration:none; color:#fff; display:flex; justify-content:space-between">Perplexity — AI <span>↗</span></a></div>`;
+    const eq=encodeURIComponent(q);
+    c.innerHTML=`<div class="cardHead"><div class="cardTitle"><i style="background:linear-gradient(135deg,#007aff,#5856d6)">⌕</i> Safari</div><span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:rgba(255,255,255,0.4)">Opened</span></div><div style="position:relative; z-index:1"><div style="padding:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.06); border-radius:14px; display:flex; justify-content:space-between; align-items:center"><span style="font-weight:600">“${esc(q)}”</span><a href="${url}" target="_blank" style="padding:8px 12px; background:#007aff; color:#fff; border-radius:10px; text-decoration:none; font-weight:700; font-size:12px">Open in Safari ↗</a></div><div style="font-size:11px; color:rgba(255,255,255,0.45); margin-top:8px">Opened Safari search. If blocked, tap the button.</div></div>`;
     cards.prepend(c);
+    showToast('Opened Safari — "'+q+'"', 2500);
   }
   addMsg(res.reply,'ai'); speak(res.reply); if(navigator.vibrate) navigator.vibrate(12);
 }
@@ -940,14 +959,14 @@ function qa(k){
 // Sheet
 function openSheet(){ document.getElementById('overlay').classList.add('open'); }
 function closeSheet(){ document.getElementById('overlay').classList.remove('open'); }
-function clearChat(){ chat.innerHTML=`<div class="msg ai"><div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em; opacity:0.45; margin-bottom:6px">AURA • J.A.R.V.I.S. • NOW</div>Hologram cleared, Sir — still online. Try “Weather?” or hold mic.<div class="msgMeta">◐ Standby</div></div>`; cards.innerHTML=''; hero.classList.remove('compact'); showToast('⬢ Hologram reset'); }
+function clearChat(){ chat.innerHTML=`<div class="msg ai"><div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em; opacity:0.45; margin-bottom:6px">AURA • J.A.R.V.I.S. • NOW</div>Cleared — still here. Try “Weather?” or hold mic.<div class="msgMeta">◐ Standby</div></div>`; cards.innerHTML=''; hero.classList.remove('compact'); showToast('⬢ Cleared'); }
 
 // Notifications + background reminders
 let swReg=null;
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./service-worker.js').then(r=>{ swReg=r; }).catch(()=>{});
   navigator.serviceWorker.addEventListener('message', e=>{
-    if(e.data?.type==='REMINDER_DUE'){ const r=e.data.reminder; addMsg(`⬢ Hologram reminder, Sir: ${r.text}`,'ai'); speak(`Sir, reminder: ${r.text}`); showToast('⬢ '+r.text,3400); }
+    if(e.data?.type==='REMINDER_DUE'){ const r=e.data.reminder; addMsg(`Reminder: ${r.text}`,'ai'); speak(`Reminder: ${r.text}`); showToast('⬢ '+r.text,3400); }
   });
 }
 function scheduleReminder(text, at){
@@ -962,7 +981,7 @@ function fire(rem){
   if(swReg && Notification?.permission==='granted'){
     swReg.showNotification('AURA • J.A.R.V.I.S.', {body:rem.text, icon:'./icon-192.png', badge:'./icon-192.png', vibrate:[300,100,300]}).catch(()=> new Notification('AURA', {body:rem.text}));
   } else if(Notification?.permission==='granted'){ new Notification('AURA', {body:rem.text}); }
-  addMsg(`⬢ Reminder, Sir: ${rem.text}`,'ai'); speak(`Sir, reminder: ${rem.text}`); showToast('⬢ '+rem.text,3600); if(navigator.vibrate) navigator.vibrate([200,80,200]);
+  addMsg(`Reminder: ${rem.text}`,'ai'); speak(`Reminder: ${rem.text}`); showToast('⬢ '+rem.text,3600); if(navigator.vibrate) navigator.vibrate([200,80,200]);
 }
 reminders.forEach(r=> setTimeout(()=>fire(r), Math.max(0,r.at-Date.now())));
 setInterval(()=>{ const now=Date.now(); reminders.filter(r=>r.at<=now).forEach(fire); }, 30000);
@@ -970,7 +989,7 @@ async function enableNotif(){
   if(!('Notification' in window)) return showToast('Notifications not supported');
   if(!window.isSecureContext) return showToast('Need HTTPS — open deployed URL');
   const p=await Notification.requestPermission();
-  if(p==='granted'){ showToast('⬢ Hologram notifications armed, Sir'); if(swReg) swReg.showNotification('AURA armed', {body:'Hologram reminders will fire even when closed', icon:'./icon-192.png'}); }
+  if(p==='granted'){ showToast('Notifications on'); if(swReg) swReg.showNotification('AURA armed', {body:'Hologram reminders will fire even when closed', icon:'./icon-192.png'}); }
   else showToast('Permission: '+p);
 }
 

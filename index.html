@@ -347,6 +347,8 @@
   .toggleBtn{padding:6px 11px; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.06); color:#fff; font-weight:700; font-size:11px; cursor:pointer; font-family:'JetBrains Mono',monospace}
   .toggleBtn.on{border-color:#00e676; background:linear-gradient(135deg,#00e676,#00c853); color:#000}
   .toggleBtn.on2{border-color:#7c6bff; background:linear-gradient(135deg,#7c6bff,#a78bfa); color:#fff}
+  .wakeBar{margin:8px 16px 0; padding:10px 12px; background:linear-gradient(135deg, rgba(255,184,106,0.1), rgba(255,59,130,0.08)); border:1px solid rgba(255,184,106,0.2); border-radius:14px; display:flex; align-items:center; gap:10px}
+  .wakeBar.on{ background:linear-gradient(135deg, rgba(255,184,106,0.18), rgba(255,59,130,0.14)); border-color:rgba(255,184,106,0.35); box-shadow:0 0 16px rgba(255,184,106,0.15) }
 </style>
 </head>
 <body>
@@ -406,6 +408,15 @@
     <button onclick="setMode('local')" id="bLocal" class="toggleBtn on">LOCAL • Offline</button>
     <button onclick="setMode('cloud')" id="bCloud" class="toggleBtn">CLOUD • Free</button>
     <span style="margin-left:auto; opacity:0.45">Hold mic to talk</span>
+  </div>
+
+  <div class="wakeBar" id="wakeBar">
+    <span style="font-size:16px">◐</span>
+    <div style="flex:1; line-height:1.3">
+      <div style="font-weight:800; font-family:'Space Grotesk',sans-serif; font-size:12px; letter-spacing:-0.2px">WAKE WORD • Hands-free</div>
+      <div style="font-size:11px; color:rgba(255,255,255,0.55); font-weight:500" id="wakeSub">Say <b style="color:#ffb86a">"Hey AURA"</b> or <b style="color:#ffb86a">"Hey J.A.R.V.I.S."</b> — no tap needed</div>
+    </div>
+    <button onclick="toggleWake()" id="wakeBtn" style="padding:8px 14px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.07); color:#fff; font-weight:800; font-size:11px; cursor:pointer; font-family:'JetBrains Mono',monospace; white-space:nowrap">OFF</button>
   </div>
 
   <div class="scroll" id="scroll">
@@ -638,7 +649,93 @@ function updateVoiceUI(){
   island.classList.toggle('active', on);
   if(on) hero.classList.add('compact'); else setTimeout(()=>{ if(!isListening) hero.classList.remove('compact'); }, 600);
   islandTxt.textContent = on ? 'J.A.R.V.I.S. listening' : 'J.A.R.V.I.S. standby';
+  // manage wake lifecycle
+  if(on){
+    if(typeof wakeActive !== 'undefined' && wakeActive){ try{wakeRec.stop()}catch(e){} wakeActive=false; }
+  } else {
+    if(typeof wakeEnabled !== 'undefined' && wakeEnabled && !wakeActive && !wakeCooldown){
+      setTimeout(()=> { if(typeof startWake==='function') startWake(); }, 800);
+    }
+  }
 }
+
+// ===== WAKE WORD: Hey AURA / Hey J.A.R.V.I.S. — hands-free (works while app open) =====
+let wakeEnabled = localStorage.getItem('aura_wake_enabled')==='1';
+let wakeRec = null;
+let wakeActive = false;
+let wakeCooldown = false;
+const WAKE_PHRASES = ['hey aura','hey ora','hey or a','hello aura','hey jarvis','hey jarvice','hello jarvis','hey travis','jarvis','aura'];
+function isWakePhrase(t){
+  const s=t.toLowerCase().trim();
+  for(const p of WAKE_PHRASES){ if(s.includes(p)) return p; }
+  if(s.includes('hey') && (s.includes('aura')||s.includes('ora')||s.includes('jarvis'))) return 'hey aura';
+  return null;
+}
+function updateWakeUI(){
+  const bar=document.getElementById('wakeBar');
+  const btn=document.getElementById('wakeBtn');
+  const sub=document.getElementById('wakeSub');
+  if(!bar||!btn) return;
+  if(wakeEnabled){
+    bar.classList.add('on'); btn.textContent='ON ●'; btn.style.background='linear-gradient(135deg,#ffb86a,#ff3b82)'; btn.style.color='#000'; btn.style.borderColor='rgba(255,184,106,0.4)';
+    sub.innerHTML='Listening for <b style="color:#ffb86a">"Hey AURA"</b> — just say it, Sir';
+  } else {
+    bar.classList.remove('on'); btn.textContent='OFF'; btn.style.background='rgba(255,255,255,0.07)'; btn.style.color='#fff'; btn.style.borderColor='rgba(255,255,255,0.1)';
+    sub.innerHTML='Say <b style="color:#ffb86a">"Hey AURA"</b> or <b style="color:#ffb86a">"Hey J.A.R.V.I.S."</b> — no tap needed';
+  }
+}
+async function toggleWake(){
+  if(wakeEnabled){
+    wakeEnabled=false; localStorage.setItem('aura_wake_enabled','0');
+    stopWake(); updateWakeUI(); showToast('◐ Wake word OFF, Sir'); return;
+  }
+  if(isIframe()){ showBanner('Wake word needs mic outside preview, Sir — open outside first'); showToast('Open outside iframe to enable Hey AURA', 3500); }
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    const ok=await primeMic(); if(!ok){ showBanner(); showToast('Allow mic to enable Hey AURA'); return; }
+  }
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ showToast('Wake word not supported — try Safari'); return; }
+  wakeEnabled=true; localStorage.setItem('aura_wake_enabled','1');
+  updateWakeUI(); showToast('◐ Wake word ON — say "Hey AURA", Sir', 3000);
+  startWake();
+}
+function startWake(){
+  if(!wakeEnabled || wakeActive || isListening) return;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return;
+  try{ if(wakeRec) try{wakeRec.stop()}catch(e){} }catch(e){}
+  wakeRec=new SR();
+  wakeRec.lang='en-US'; wakeRec.continuous=true; wakeRec.interimResults=true; wakeRec.maxAlternatives=1;
+  wakeRec.onstart=()=>{ wakeActive=true; islandTxt.textContent='Say "Hey AURA"'; };
+  wakeRec.onend=()=>{
+    wakeActive=false;
+    if(wakeEnabled && !isListening){ setTimeout(()=>{ if(wakeEnabled && !isListening && !wakeCooldown) startWake(); }, 900); }
+  };
+  wakeRec.onerror=(e)=>{
+    wakeActive=false;
+    if(e.error==='not-allowed'){ wakeEnabled=false; localStorage.setItem('aura_wake_enabled','0'); updateWakeUI(); showBanner(getHelp(e.error)); }
+    else if(wakeEnabled && !isListening){ setTimeout(()=>startWake(), 1200); }
+  };
+  wakeRec.onresult=(e)=>{
+    if(wakeCooldown || isListening) return;
+    let transcript=''; for(let i=e.resultIndex;i<e.results.length;i++) transcript+=e.results[i][0].transcript+' '; transcript=transcript.toLowerCase();
+    const phrase=isWakePhrase(transcript);
+    if(phrase){
+      wakeCooldown=true; if(navigator.vibrate) navigator.vibrate([30,20,30]); showToast('◐ Yes Sir? Listening...', 2800);
+      try{wakeRec.stop()}catch(e){} wakeActive=false; islandTxt.textContent='Yes Sir?'; speak('Yes Sir?');
+      setTimeout(async()=>{
+        if(!isListening) await toggleVoice();
+        const wait=setInterval(()=>{ if(!isListening){ clearInterval(wait); setTimeout(()=>{ wakeCooldown=false; if(wakeEnabled) startWake(); }, 900); }},400);
+        setTimeout(()=>{ wakeCooldown=false; if(wakeEnabled && !isListening && !wakeActive) startWake(); }, 8000);
+      }, 700);
+    } else {
+      if(transcript.trim().length>2){ islandTxt.textContent='"'+transcript.trim().slice(-18)+'"'; setTimeout(()=>{ if(!isListening && wakeActive) islandTxt.textContent='Say "Hey AURA"'; }, 1400); }
+    }
+  };
+  try{ wakeRec.start(); }catch(e){ setTimeout(()=>{ wakeActive=false; if(wakeEnabled) startWake(); }, 800); }
+}
+function stopWake(){ wakeActive=false; try{ if(wakeRec) wakeRec.stop(); }catch(e){} wakeRec=null; }
+setTimeout(()=>{ updateWakeUI(); if(wakeEnabled) startWake(); }, 700);
 async function toggleVoice(){
   if(!recognition){ showBanner(); showToast('Voice not supported — try Safari/Chrome'); return; }
   if(isListening){ try{ recognition.stop(); }catch(e){}; return; }
